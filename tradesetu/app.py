@@ -9,6 +9,10 @@ from flask_wtf import CSRFProtect
 
 app = Flask(__name__)
 
+# Static folder configuration
+app.config['STATIC_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static')
+app.config['STATIC_URL_PATH'] = '/static'
+
 # Security Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'supersecretkey123456789abcdef')  # Use strong secret in production
 app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -56,15 +60,37 @@ def generate_shipment_id():
     return f"SHP{random.randint(100000, 999999)}"
 
 def generate_shipment_hash(shipment_id, product_id, quantity, price, manufacturer_id, previous_hash):
-    data = f"{shipment_id}{product_id}{quantity}{price}{manufacturer_id}{previous_hash}"
-    return hashlib.sha256(data.encode()).hexdigest()
+    data_string = f"{shipment_id}|{product_id}|{quantity}|{price}|{manufacturer_id}|{previous_hash}"
+    return hashlib.sha256(data_string.encode()).hexdigest()
 
 def generate_qr_code(shipment_id, current_hash):
+    # GET BASE DIRECTORY
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+
+    # DEFINE QR FOLDER PATH
+    qr_folder = os.path.join(base_dir, "static", "qr_codes")
+
+    # CREATE FOLDER IF NOT EXISTS
+    if not os.path.exists(qr_folder):
+        os.makedirs(qr_folder)
+
+    # CREATE QR DATA
     qr_data = f"{shipment_id}|{current_hash}"
+
+    # GENERATE QR
     qr = qrcode.make(qr_data)
-    qr_path = os.path.join(os.getcwd(), "static", "qr_codes", f"{shipment_id}.png")
-    qr.save(qr_path)
-    return qr_path
+
+    # SAVE USING ABSOLUTE PATH
+    file_path = os.path.join(qr_folder, f"{shipment_id}.png")
+    qr.save(file_path)
+
+    # DEBUG PRINT (VERY IMPORTANT)
+    print("QR SAVED AT:", file_path)
+
+    # VERIFY FILE EXISTS
+    print("FILE EXISTS:", os.path.exists(file_path))
+
+    return file_path
 
 def insert_shipment_into_db(shipment_id, manufacturer_id, product_name, product_id, quantity, price_per_unit, total_price, previous_hash, current_hash):
     connection = get_db_connection()
@@ -254,9 +280,9 @@ def login():
 
             if user and verify_password(password, user['password_hash'], user['salt']):
                 session['user_id'] = user['id']
-                session['owner_name'] = user['owner_name']
                 session['business_name'] = user['business_name']
-                session['stakeholder'] = user['stakeholder']
+                session['stakeholder'] = str(user.get('stakeholder') or '').strip().lower()
+                print('Logged in as:', repr(session.get('stakeholder')))
                 return redirect(url_for('dashboard'))
             else:
                 flash('Invalid email or password')
@@ -272,14 +298,365 @@ def login():
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
+        return redirect('/login')
+
+    role = session.get('stakeholder')
+    print('SESSION ROLE:', role)
+
+    if role == 'manufacturer':
+        return redirect(url_for('manufacturer_dashboard'))
+    elif role == 'distributor':
+        return redirect(url_for('distributor_dashboard'))
+    else:
+        return 'Unauthorized Access'
+
+@app.route('/manufacturer_dashboard')
+def manufacturer_dashboard():
+    if session.get('stakeholder') != 'manufacturer':
+        return 'Unauthorized'
+
+    return render_template('manufacturer_dashboard.html',
+                           owner_name=session.get('owner_name'),
+                           business_name=session.get('business_name'))
+
+@app.route('/distributor_dashboard')
+def distributor_dashboard():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    if session.get('stakeholder') != 'distributor':
+        return 'Unauthorized'
+
+    # Fetch shipments assigned to this distributor
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT * FROM shipments WHERE distributor_id = %s",
+        (session['user_id'],)
+    )
+    shipments = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('distributor_dashboard.html', shipments=shipments)
+
+@app.route('/scan_qr')
+def scan_qr():
+    if 'user_id' not in session or session.get('stakeholder') != 'distributor':
+        return redirect(url_for('login'))
+    return render_template('scan_qr.html')
+
+@app.route('/verify_hash', methods=['POST'])
+@csrf.exempt
+def verify_hash():
+    try:
+        print("=== QR VERIFICATION REQUEST ===")
+        if 'user_id' not in session or session.get('stakeholder') != 'distributor':
+            print("❌ UNAUTHORIZED - No session or wrong stakeholder")
+            return {'status': 'unauthorized'}, 403
+
+        data = request.get_json()
+        print("REQUEST DATA:", data)
+        
+        qr_hash = data.get("qr_hash")
+        shipment_id = data.get("shipment_id")
+
+        if not qr_hash or not shipment_id:
+            print("❌ MISSING DATA - qr_hash:", repr(qr_hash), "shipment_id:", repr(shipment_id))
+            return {'status': 'invalid_data'}, 400
+
+        # BACKEND CLEANING (double safety)
+        original_qr_hash = qr_hash
+        qr_hash = qr_hash.strip()
+        qr_hash = qr_hash.replace("\n", "").replace("\r", "")
+        qr_hash = qr_hash.lower()  # Ensure lowercase
+
+        print("CLEANED QR HASH:", repr(qr_hash))
+        print("ORIGINAL LENGTH:", len(original_qr_hash), "CLEANED LENGTH:", len(qr_hash))
+
+        # FETCH FROM DATABASE
+        print("FETCHING SHIPMENT:", shipment_id)
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM shipments WHERE shipment_id = %s", (shipment_id,))
+        shipment = cursor.fetchone()
+        cursor.close()
+        connection.close()
+
+        if not shipment:
+            print("❌ SHIPMENT NOT FOUND")
+            return {'status': 'not_found'}, 404
+            
+        if shipment['distributor_id'] != session['user_id']:
+            print("❌ NOT AUTHORIZED FOR THIS SHIPMENT")
+            return {'status': 'not_found'}, 404
+
+        stored_hash = shipment['current_hash']
+        original_stored = stored_hash
+        
+        # CLEAN STORED HASH
+        stored_hash = stored_hash.strip()
+        stored_hash = stored_hash.lower()  # Ensure lowercase
+
+        print("STORED HASH:", repr(stored_hash))
+        print("ORIGINAL STORED LENGTH:", len(original_stored), "CLEANED LENGTH:", len(stored_hash))
+
+        # FINAL COMPARISON
+        print("COMPARISON:")
+        print("  QR:", repr(qr_hash))
+        print("  DB:", repr(stored_hash))
+        print("  EQUAL:", qr_hash == stored_hash)
+
+        if qr_hash == stored_hash:
+            print("✅ VERIFICATION SUCCESSFUL")
+            return {"status": "valid"}
+        else:
+            print("❌ VERIFICATION FAILED")
+            return {"status": "tampered"}
+            
+    except Exception as e:
+        print("❌ EXCEPTION IN VERIFY_HASH:", str(e))
+        import traceback
+        traceback.print_exc()
+        return {'status': 'server_error'}, 500
+
+@app.route('/verify_quantity', methods=['POST'])
+@csrf.exempt
+def verify_quantity():
+    if 'user_id' not in session or session.get('stakeholder') != 'distributor':
+        return {'message': 'Unauthorized'}, 403
+
+    data = request.get_json()
+    shipment_id = data.get("shipment_id")
+    received_qty = data.get("received_qty")
+
+    if not shipment_id or received_qty is None:
+        return {'message': 'Invalid data'}, 400
+
+    # Convert quantity
+    try:
+        received_qty = int(received_qty)
+    except (ValueError, TypeError):
+        return {'message': 'Invalid quantity'}, 400
+
+    # Fetch shipment from DB
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM shipments WHERE shipment_id = %s", (shipment_id,))
+    shipment = cursor.fetchone()
+
+    if not shipment or shipment['distributor_id'] != session['user_id']:
+        cursor.close()
+        connection.close()
+        return {'message': 'Shipment not found'}, 404
+
+    # Compare quantity
+    stored_qty = int(shipment['quantity'])
+
+    if received_qty == stored_qty:
+        # Update status to IN_TRANSIT
+        cursor.execute("UPDATE shipments SET status = 'IN_TRANSIT' WHERE shipment_id = %s", (shipment_id,))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return {'message': 'Verification Successful - Shipment IN_TRANSIT'}, 200
+    else:
+        # Update status to TAMPERED
+        cursor.execute("UPDATE shipments SET status = 'TAMPERED' WHERE shipment_id = %s", (shipment_id,))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return {'message': 'Quantity Mismatch - Possible Tampering Detected'}, 200
+
+@app.route('/verify_inline', methods=['POST'])
+def verify_inline():
+    if 'user_id' not in session or session.get('stakeholder') != 'distributor':
+        return {'message': 'Unauthorized', 'success': False}, 403
+
+    data = request.get_json()
+
+    shipment_id = data.get("shipment_id")
+    qr_data = data.get("qr_data")
+    received_qty = data.get("received_qty")
+
+    # VALIDATE QR
+    if not qr_data or "|" not in qr_data:
+        return {"message": "Invalid QR data"}
+
+    qr_shipment_id, qr_hash = qr_data.split("|")
+
+    if qr_shipment_id != shipment_id:
+        return {"message": "Wrong QR for this shipment"}
+
+    # CONVERT QTY
+    try:
+        received_qty = int(received_qty)
+    except (ValueError, TypeError):
+        return {"message": "Invalid quantity entered"}
+
+    # Fetch shipment from database
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM shipments WHERE shipment_id = %s", (shipment_id,))
+    shipment = cursor.fetchone()
+
+    if not shipment or shipment['distributor_id'] != session['user_id']:
+        cursor.close()
+        connection.close()
+        return {'message': 'Unauthorized or shipment not found', 'success': False}, 403
+
+    # STEP 1: Hash Verification
+    expected_hash = generate_shipment_hash(
+        shipment['shipment_id'],
+        shipment['product_id'],
+        str(shipment['quantity']),
+        str(shipment['price_per_unit']),
+        str(shipment['manufacturer_id']),
+        shipment['previous_hash'] or '0'
+    )
+
+    if expected_hash != shipment['current_hash']:
+        cursor.execute("UPDATE shipments SET status = 'TAMPERED' WHERE shipment_id = %s", (shipment_id,))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return {'message': 'Tampered Data Detected - Hash Mismatch', 'success': False}, 400
+
+    # STEP 2: Quantity Verification
+    try:
+        stored_qty = int(shipment['quantity'])
+    except (ValueError, TypeError):
+        cursor.close()
+        connection.close()
+        return {'message': 'Error reading stored quantity', 'success': False}, 500
+
+    if received_qty != stored_qty:
+        cursor.execute("UPDATE shipments SET status = 'TAMPERED' WHERE shipment_id = %s", (shipment_id,))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        return {'message': 'Quantity Mismatch - Possible Tampering', 'success': False}, 400
+
+    # STEP 3: Verification Success - Update status to IN_TRANSIT
+    cursor.execute("UPDATE shipments SET status = 'IN_TRANSIT' WHERE shipment_id = %s", (shipment_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    return {'message': 'Verification Successful - Shipment IN_TRANSIT', 'success': True}, 200
+
+@app.route('/verify/<shipment_id>', methods=['GET', 'POST'])
+def verify_shipment(shipment_id):
+    if 'user_id' not in session or session.get('stakeholder') != 'distributor':
         return redirect(url_for('login'))
 
-    if session.get('stakeholder') != 'Manufacturer':
+    # Fetch shipment
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM shipments WHERE shipment_id = %s", (shipment_id,))
+    shipment = cursor.fetchone()
+
+    if not shipment or shipment['distributor_id'] != session['user_id']:
+        cursor.close()
+        connection.close()
         return "Unauthorized", 403
 
-    return render_template('manufacturer_dashboard.html', 
-                           owner_name=session.get('owner_name'), 
-                           business_name=session.get('business_name'))
+    verification_message = None
+    verification_status = None
+    hash_valid = None
+
+    # ONLY verify on POST request
+    if request.method == 'POST':
+        # STEP 1: Hash Verification
+        expected_hash = generate_shipment_hash(
+            shipment['shipment_id'],
+            shipment['product_id'],
+            str(shipment['quantity']),
+            str(shipment['price_per_unit']),
+            str(shipment['manufacturer_id']),
+            shipment['previous_hash'] or '0'
+        )
+
+        hash_valid = expected_hash == shipment['current_hash']
+
+        if not hash_valid:
+            # Mark as TAMPERED due to hash mismatch
+            cursor.execute("UPDATE shipments SET status = 'TAMPERED' WHERE shipment_id = %s", (shipment_id,))
+            connection.commit()
+            verification_message = "Data Tampering Detected - Hash Mismatch"
+            verification_status = "tampered"
+            shipment['status'] = 'TAMPERED'
+        else:
+            # STEP 2: Quantity Verification (only if hash is valid)
+            received_quantity_str = request.form.get('received_quantity')
+            try:
+                received_quantity = int(received_quantity_str)
+            except (ValueError, TypeError):
+                verification_message = "Invalid quantity entered"
+                verification_status = "error"
+            else:
+                if received_quantity != shipment['quantity']:
+                    # Mark as TAMPERED due to quantity mismatch
+                    cursor.execute("UPDATE shipments SET status = 'TAMPERED' WHERE shipment_id = %s", (shipment_id,))
+                    connection.commit()
+                    verification_message = "Quantity Mismatch - Possible Tampering"
+                    verification_status = "tampered"
+                    shipment['status'] = 'TAMPERED'
+                else:
+                    # STEP 3: Verification Success
+                    verification_message = "Verification Successful"
+                    verification_status = "verified"
+                    session['verified_shipment'] = shipment_id
+    else:
+        # GET request: Just display the form, do NOT perform verification
+        hash_valid = True  # Assume valid until proven otherwise on POST
+
+    cursor.close()
+    connection.close()
+
+    return render_template('verify.html', 
+                           shipment=shipment, 
+                           hash_valid=hash_valid,
+                           verification_message=verification_message,
+                           verification_status=verification_status)
+
+@app.route('/accept_shipment', methods=['POST'])
+def accept_shipment():
+    if 'user_id' not in session or session.get('stakeholder') != 'distributor':
+        return redirect(url_for('login'))
+
+    shipment_id = request.form.get('shipment_id')
+    if not shipment_id:
+        return "Shipment ID required", 400
+
+    # Check if verified
+    if session.get('verified_shipment') != shipment_id:
+        flash("Please verify the shipment before accepting.")
+        return redirect(url_for('distributor_dashboard'))
+
+    # Fetch shipment and verify ownership
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM shipments WHERE shipment_id = %s", (shipment_id,))
+    shipment = cursor.fetchone()
+
+    if not shipment or shipment['distributor_id'] != session['user_id']:
+        cursor.close()
+        connection.close()
+        return "Unauthorized", 403
+
+    # Update status to IN_TRANSIT
+    cursor.execute("UPDATE shipments SET status = 'IN_TRANSIT' WHERE shipment_id = %s", (shipment_id,))
+    connection.commit()
+
+    # Clear verification flag
+    session.pop('verified_shipment', None)
+
+    cursor.close()
+    connection.close()
+
+    flash("Shipment accepted successfully.")
+    return redirect(url_for('distributor_dashboard'))
 
 @app.route('/logout')
 def logout():
@@ -404,5 +781,6 @@ def my_shipments():
 
     return render_template('my_shipments.html', shipments=shipments, distributors=distributors)
 
+
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5006)
+    app.run(debug=False, host='0.0.0.0', port=5001)

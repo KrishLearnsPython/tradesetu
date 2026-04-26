@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-6">
+    <div class="w-full max-w-2xl">
+        <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">Scan QR Code</h1>
+            <p class="text-gray-600 mb-6">Use your camera to scan the shipment QR code for verification.</p>
+
+            <div id="reader" class="w-full mb-6 border-2 border-dashed border-gray-300 rounded-lg p-4"></div>
+
+            <div id="result" class="mb-6 hidden">
+                <p class="text-green-600 font-semibold">QR Code scanned successfully!</p>
+                <p id="scanned-text" class="text-gray-700 mt-2"></p>
+            </div>
+
+            <div class="text-center">
+                <button id="start-scan" class="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300 font-semibold">
+                    Start Scanning
+                </button>
+                <a href="{{ url_for('distributor_dashboard') }}" class="ml-4 text-blue-600 hover:text-blue-700 transition duration-300 font-semibold">
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    let html5QrcodeScanner;
+
+    document.getElementById('start-scan').addEventListener('click', function() {
+        this.disabled = true;
+        this.textContent = 'Scanning...';
+
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: 250 });
+
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    });
+
+    function onScanSuccess(decodedText, decodedResult) {
+        // Stop scanning
+        html5QrcodeScanner.clear();
+
+        // Show result
+        document.getElementById('result').classList.remove('hidden');
+        document.getElementById('scanned-text').textContent = decodedText;
+
+        // Parse QR data: shipment_id|hash
+        const parts = decodedText.split('|');
+        if (parts.length === 2) {
+            const shipmentId = parts[0];
+            // Redirect to verify page
+            window.location.href = `/verify/${shipmentId}`;
+        } else {
+            alert('Invalid QR code format');
+        }
+    }
+
+    function onScanFailure(error) {
+        console.warn(`Code scan error = ${error}`);
+    }
+</script>
+{% endblock %}

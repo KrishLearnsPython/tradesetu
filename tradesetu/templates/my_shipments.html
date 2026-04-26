@@ -77,7 +77,11 @@
                             </div>
                             <div>
                                 <div class="text-sm font-medium text-gray-900">QR Code</div>
-                                <img src="/static/qr_codes/{{ shipment.shipment_id }}.png" alt="QR Code" class="w-16 h-16 object-contain">
+                                <img src="/static/qr_codes/{{ shipment.shipment_id }}.png" 
+                                     alt="QR Code" 
+                                     class="w-16 h-16 object-contain cursor-pointer hover:scale-110 transition duration-200 rounded border"
+                                     onclick="openQRModal(this.src)">
+                                <p class="text-xs text-gray-500 text-center mt-1">Click to enlarge</p>
                             </div>
                         </div>
                     </li>
@@ -92,4 +96,38 @@
         </div>
     </main>
 </div>
+
+<!-- Fullscreen QR Modal -->
+<div id="qrModal" class="fixed inset-0 bg-black bg-opacity-90 hidden flex items-center justify-center z-50">
+    <img id="qrImage" class="max-w-full max-h-full rounded-lg shadow-2xl">
+    <button onclick="closeQRModal()" 
+        class="absolute top-5 right-5 text-white text-4xl font-bold hover:text-gray-300 transition duration-200">
+        ✕
+    </button>
+</div>
+
+<script>
+    function openQRModal(src) {
+        document.getElementById('qrModal').classList.remove('hidden');
+        document.getElementById('qrImage').src = src;
+    }
+
+    function closeQRModal() {
+        document.getElementById('qrModal').classList.add('hidden');
+    }
+
+    // Close modal when clicking on background
+    document.getElementById('qrModal').addEventListener('click', function(e) {
+        if (e.target.id === 'qrModal') {
+            closeQRModal();
+        }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeQRModal();
+        }
+    });
+</script>
 {% endblock %}

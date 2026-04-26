@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Header Navigation -->
+<nav class="bg-white shadow-md border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <a href="/" class="text-2xl font-bold text-blue-600">TradeSetu</a>
+            <div class="flex gap-6 items-center">
+                <a href="/distributor_dashboard" class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium">
+                    Dashboard
+                </a>
+                <a href="/logout" class="text-red-600 hover:text-red-700 transition duration-200 font-medium">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Page Title Section -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900">Distributor Dashboard</h2>
+            <p class="text-gray-600 mt-2">Welcome {{ session['business_name'] }}</p>
+            <p class="text-gray-500 mt-1">Scan QR code to verify shipment integrity, then enter received quantity</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if shipments %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-300 rounded-lg">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Shipment ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Product Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Received Qty</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for s in shipments %}
+                            <tr class="hover:bg-gray-50 transition duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.shipment_id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ s.product_name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <input type="number"
+                                           id="qty_{{ s.shipment_id }}"
+                                           disabled
+                                           placeholder="Enter quantity"
+                                           class="border px-2 py-1 rounded w-32 bg-gray-200">
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                        {% if s.status == 'CREATED' %}bg-gray-100 text-gray-800
+                                        {% elif s.status == 'ASSIGNED' %}bg-yellow-100 text-yellow-800
+                                        {% elif s.status == 'IN_TRANSIT' %}bg-blue-100 text-blue-800
+                                        {% elif s.status == 'DELIVERED' %}bg-green-100 text-green-800
+                                        {% elif s.status == 'TAMPERED' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ s.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                    <button onclick="startScan('{{ s.shipment_id }}')"
+                                            {% if s.status != 'ASSIGNED' %}disabled{% endif %}
+                                            class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                        Scan QR
+                                    </button>
+                                    <button onclick="submitQuantity('{{ s.shipment_id }}')"
+                                            id="confirm_{{ s.shipment_id }}"
+                                            disabled
+                                            class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                        Confirm
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-500 text-lg">No shipments assigned yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Scanner Modal -->
+<div id="scannerModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+
+    <div id="reader" style="width:300px;"></div>
+
+    <button onclick="closeScanner()"
+        class="absolute top-5 right-5 text-white text-2xl">
+        ✕
+    </button>
+
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    let html5QrCode = null;
+    let scanning = false;
+    let activeShipment = null;
+
+    function startScan(shipmentId) {
+        if (scanning) return;
+
+        scanning = true;
+        activeShipment = shipmentId;
+
+        const modal = document.getElementById("scannerModal");
+        modal.classList.remove("hidden");
+
+        setTimeout(() => {
+            html5QrCode = new Html5Qrcode("reader");
+
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length) {
+                    let cameraId = devices[0].id;
+
+                    html5QrCode.start(
+                        cameraId,
+                        {
+                            fps: 10,
+                            qrbox: { width: 250, height: 250 },
+                            aspectRatio: 1.0
+                        },
+                        (decodedText) => {
+                            // 1. DEBUG RAW QR DATA (FRONTEND)
+                            // console.log("RAW QR:", decodedText);
+
+                            // 2. CLEAN QR DATA (FRONTEND)
+                            let cleanQR = decodedText.trim();
+
+                            // REMOVE NEWLINES
+                            cleanQR = cleanQR.replace(/\n/g, "").replace(/\r/g, "");
+
+                            // 3. VALIDATE FORMAT
+                            if (!cleanQR.includes("|")) {
+                                alert("Invalid QR format");
+                                return;
+                            }
+
+                            // 4. SPLIT SAFELY
+                            let parts = cleanQR.split("|");
+                            if (parts.length !== 2) {
+                                alert("Malformed QR");
+                                return;
+                            }
+
+                            let qrShipmentId = parts[0].trim();
+                            let qrHash = parts[1].trim();
+
+                            if (qrShipmentId !== shipmentId) {
+                                alert("Wrong QR scanned");
+                                return;
+                            }
+
+                            html5QrCode.stop().then(() => {
+                                scanning = false;
+                            });
+
+                            // 5. SEND CLEAN DATA TO BACKEND
+                            // console.log("SENDING TO BACKEND:", { shipment_id: qrShipmentId, qr_hash: qrHash });
+                            fetch("/verify_hash", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    shipment_id: qrShipmentId,
+                                    qr_hash: qrHash
+                                })
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status !== "valid") {
+                                    alert("Tampered Data Detected");
+                                    modal.classList.add("hidden");
+                                    return;
+                                }
+
+                                document.getElementById("qty_" + shipmentId).disabled = false;
+                                document.getElementById("qty_" + shipmentId).classList.remove("bg-gray-200");
+                                document.getElementById("confirm_" + shipmentId).disabled = false;
+
+                                alert("QR Verified. Enter quantity.");
+                                modal.classList.add("hidden");
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert("Verification failed");
+                                modal.classList.add("hidden");
+                            });
+                        },
+                        (errorMessage) => {
+                            // ignore scan errors
+                        }
+                    ).catch(err => {
+                        console.error('Start scan error:', err);
+                        alert("Camera failed to start");
+                        scanning = false;
+                        modal.classList.add("hidden");
+                    });
+
+                } else {
+                    alert("No camera found");
+                    scanning = false;
+                    modal.classList.add("hidden");
+                }
+
+            }).catch(err => {
+                console.error(err);
+                alert("Camera access denied or not available");
+                scanning = false;
+                modal.classList.add("hidden");
+            });
+
+        }, 500);
+    }
+
+    function closeScanner() {
+        if (html5QrCode) {
+            html5QrCode.stop().catch(() => {});
+            html5QrCode = null;
+        }
+
+        scanning = false;
+        document.getElementById("scannerModal").classList.add("hidden");
+    }
+
+    function submitQuantity(shipmentId) {
+        let qty = document.getElementById("qty_" + shipmentId).value;
+
+        if (!qty) {
+            alert("Enter quantity");
+            return;
+        }
+
+        fetch("/verify_quantity", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                shipment_id: shipmentId,
+                received_qty: qty
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message);
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Verification failed");
+        });
+    }
+</script>
+</script>
+{% endblock %}

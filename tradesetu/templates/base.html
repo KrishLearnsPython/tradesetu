@@ -27,11 +27,13 @@
     </style>
 </head>
 <body class="min-h-screen bg-gray-50">
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="fixed top-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-lg z-50 fade-in">
-                {{ messages[0] }}
-            </div>
+            {% for category, message in messages %}
+                <div class="fixed top-4 right-4 {{ 'bg-red-600' if category == 'error' else 'bg-green-600' if category == 'success' else 'bg-blue-600' }} text-white p-4 rounded-lg shadow-lg z-50 fade-in">
+                    {{ message }}
+                </div>
+            {% endfor %}
         {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}

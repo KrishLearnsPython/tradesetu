@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-brand-blue hover:text-brand-blue-hover">TradeSetu</a>
+                </div>
+                <div class="flex items-center">
+                    <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">Manufacturer Dashboard</h1>
+
+            <!-- Welcome Section -->
+            <div class="bg-white overflow-hidden shadow rounded-lg mb-8">
+                <div class="px-4 py-5 sm:p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-2">Welcome, {{ owner_name }}</h2>
+                    <p class="text-gray-600">{{ business_name }}</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a href="/create_shipment" class="bg-brand-blue hover:bg-brand-blue-hover text-white px-6 py-4 rounded-lg text-center font-medium shadow-md transition duration-200">
+                    Create Shipment
+                </a>
+                <a href="/my_shipments" class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg text-center font-medium shadow-md transition duration-200">
+                    View My Shipments
+                </a>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

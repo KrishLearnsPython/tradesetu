@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import hashlib
 import os
 import re
+import random
+import qrcode
 from db_config import get_db_connection
 from flask_wtf import CSRFProtect
 
@@ -49,6 +51,75 @@ def check_rate_limit(identifier, max_attempts=5, window_seconds=60):
 
     login_attempts[identifier].append(current_time)
     return True
+
+def generate_shipment_id():
+    return f"SHP{random.randint(100000, 999999)}"
+
+def generate_shipment_hash(shipment_id, product_id, quantity, price, manufacturer_id, previous_hash):
+    data = f"{shipment_id}{product_id}{quantity}{price}{manufacturer_id}{previous_hash}"
+    return hashlib.sha256(data.encode()).hexdigest()
+
+def generate_qr_code(shipment_id, current_hash):
+    qr_data = f"{shipment_id}|{current_hash}"
+    qr = qrcode.make(qr_data)
+    qr_path = os.path.join(os.getcwd(), "static", "qr_codes", f"{shipment_id}.png")
+    qr.save(qr_path)
+    return qr_path
+
+def insert_shipment_into_db(shipment_id, manufacturer_id, product_name, product_id, quantity, price_per_unit, total_price, previous_hash, current_hash):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    query = """
+    INSERT INTO shipments (
+        shipment_id, manufacturer_id, product_name, product_id, quantity, price_per_unit, total_price, previous_hash, current_hash
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+
+    values = (
+        shipment_id, manufacturer_id, product_name, product_id, quantity, price_per_unit, total_price, previous_hash, current_hash
+    )
+
+    cursor.execute(query, values)
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+def create_shipments_table():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        create_table_query = """
+        CREATE TABLE IF NOT EXISTS shipments (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            shipment_id VARCHAR(100) UNIQUE NOT NULL,
+            manufacturer_id INT NOT NULL,
+            product_name VARCHAR(150) NOT NULL,
+            product_id VARCHAR(100) NOT NULL,
+            quantity INT NOT NULL,
+            price_per_unit DECIMAL(10,2) NOT NULL,
+            total_price DECIMAL(12,2) NOT NULL,
+            distributor_id INT DEFAULT NULL,
+            distributor_pan VARCHAR(100),
+            status ENUM('CREATED','ASSIGNED','IN_TRANSIT','DELIVERED','TAMPERED') DEFAULT 'CREATED',
+            previous_hash VARCHAR(256),
+            current_hash VARCHAR(256) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (manufacturer_id) REFERENCES users(id)
+        );
+        """
+
+        cursor.execute(create_table_query)
+        connection.commit()
+        cursor.close()
+        connection.close()
+        print("Shipments table created or already exists.")
+    except Exception as e:
+        print(f"Error creating shipments table: {e}")
+
+# Create shipments table if not exists
+create_shipments_table()
 
 @app.after_request
 def add_security_headers(response):
@@ -141,6 +212,12 @@ def register():
             return redirect(url_for('register'))
     return render_template('register.html')
 
+@app.before_request
+def require_login():
+    allowed_routes = ['index', 'login', 'register', 'static']
+    if 'user_id' not in session and request.endpoint not in allowed_routes:
+        return redirect(url_for('login'))
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -177,6 +254,9 @@ def login():
 
             if user and verify_password(password, user['password_hash'], user['salt']):
                 session['user_id'] = user['id']
+                session['owner_name'] = user['owner_name']
+                session['business_name'] = user['business_name']
+                session['stakeholder'] = user['stakeholder']
                 return redirect(url_for('dashboard'))
             else:
                 flash('Invalid email or password')
@@ -194,29 +274,135 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute('SELECT email, owner_name FROM users WHERE id = %s', (session['user_id'],))
-        user = cursor.fetchone()
-        conn.close()
+    if session.get('stakeholder') != 'Manufacturer':
+        return "Unauthorized", 403
 
-        if not user:
-            session.clear()
-            flash('Session expired. Please login again.')
-            return redirect(url_for('login'))
-
-        return render_template('dashboard.html', user=user)
-    except Exception as e:
-        # Log the error but don't expose it to user
-        print(f"Database error in dashboard: {e}")
-        flash('Something went wrong. Please try again.')
-        return redirect(url_for('index'))
+    return render_template('manufacturer_dashboard.html', 
+                           owner_name=session.get('owner_name'), 
+                           business_name=session.get('business_name'))
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
+@app.route('/create_shipment', methods=['GET', 'POST'])
+def create_shipment():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        print("Form data received:", request.form)  # Debug
+
+        product_name = request.form.get('product_name')
+        product_id = request.form.get('product_id')
+        quantity_str = request.form.get('quantity')
+        price_per_unit_str = request.form.get('price_per_unit')
+
+        # Validate inputs
+        if not all([product_name, product_id, quantity_str, price_per_unit_str]):
+            flash('All fields are required!', 'error')
+            return render_template('create_shipment.html')
+
+        try:
+            quantity = int(quantity_str)
+            price_per_unit = float(price_per_unit_str)
+            total_price = quantity * price_per_unit
+        except ValueError:
+            flash('Invalid quantity or price format!', 'error')
+            return render_template('create_shipment.html')
+
+        # Generate a unique shipment ID
+        shipment_id = generate_shipment_id()
+
+        try:
+            # Get previous hash
+            connection = get_db_connection()
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT current_hash FROM shipments ORDER BY id DESC LIMIT 1")
+            last_shipment = cursor.fetchone()
+            previous_hash = last_shipment['current_hash'] if last_shipment else "0"
+            cursor.close()
+            connection.close()
+
+            # Generate current hash
+            current_hash = generate_shipment_hash(shipment_id, product_id, str(quantity), str(price_per_unit), str(session['user_id']), previous_hash)
+
+            # Generate QR code
+            generate_qr_code(shipment_id, current_hash)
+
+            # Insert into database
+            insert_shipment_into_db(shipment_id, session['user_id'], product_name, product_id, quantity, price_per_unit, total_price, previous_hash, current_hash)
+
+            flash('Shipment created successfully!', 'success')
+            return redirect(url_for('my_shipments'))
+        except Exception as e:
+            print("ERROR creating shipment:", e)
+            flash('Error creating shipment. Please try again.', 'error')
+            return render_template('create_shipment.html')
+
+    return render_template('create_shipment.html')
+
+@app.route('/my_shipments', methods=['GET', 'POST'])
+def my_shipments():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        shipment_id = request.form.get('shipment_id')
+        distributor_id = request.form.get('distributor_id')
+
+        if shipment_id and distributor_id:
+            try:
+                # Get distributor PAN
+                connection = get_db_connection()
+                cursor = connection.cursor(dictionary=True)
+                cursor.execute("SELECT pan_tan_id FROM users WHERE id = %s", (distributor_id,))
+                distributor = cursor.fetchone()
+                distributor_pan = distributor['pan_tan_id'] if distributor else None
+
+                # Update shipment
+                update_query = """
+                UPDATE shipments 
+                SET distributor_id = %s, distributor_pan = %s, status = 'ASSIGNED' 
+                WHERE shipment_id = %s AND manufacturer_id = %s
+                """
+                cursor.execute(update_query, (distributor_id, distributor_pan, shipment_id, session['user_id']))
+                connection.commit()
+                cursor.close()
+                connection.close()
+
+                flash('Distributor assigned successfully!', 'success')
+            except Exception as e:
+                print("ERROR assigning distributor:", e)
+                flash('Error assigning distributor. Please try again.', 'error')
+        else:
+            flash('Invalid shipment or distributor selection.', 'error')
+
+        return redirect(url_for('my_shipments'))
+
+    # GET request - fetch shipments and distributors
+    manufacturer_id = session['user_id']
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+
+    # Fetch shipments
+    shipment_query = """
+    SELECT shipment_id, product_name, quantity, status, current_hash, distributor_id, distributor_pan 
+    FROM shipments WHERE manufacturer_id = %s ORDER BY created_at DESC
+    """
+    cursor.execute(shipment_query, (manufacturer_id,))
+    shipments = cursor.fetchall()
+
+    # Fetch distributors
+    distributor_query = "SELECT id, business_name, pan_tan_id FROM users WHERE stakeholder = 'Distributor'"
+    cursor.execute(distributor_query)
+    distributors = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template('my_shipments.html', shipments=shipments, distributors=distributors)
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=5006)

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Global Navigation Bar -->
+<nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition duration-300">
+                    ← TradeSetu
+                </a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('login') }}" class="text-gray-600 hover:text-blue-600 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-300 font-medium">
+                    Login
+                </a>
+                <a href="{{ url_for('register') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 font-medium">
+                    Register
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="bg-white py-20">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center">
+            <h1 class="text-6xl font-bold mb-6 text-gray-900">
+                TradeSetu
+            </h1>
+            <p class="text-xl mb-10 max-w-2xl mx-auto text-gray-600">Connecting Trade. Securing Growth.</p>
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                <a href="{{ url_for('login') }}" class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-all duration-300 hover:scale-105 font-semibold">Login</a>
+                <a href="{{ url_for('register') }}" class="border border-gray-300 text-gray-700 px-8 py-4 rounded-lg hover:bg-gray-100 transition-all duration-300 hover:scale-105 font-semibold">Register</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="bg-gray-50 py-20">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center">
+            <h2 class="text-4xl font-bold mb-6 text-gray-900">About Us</h2>
+            <p class="text-lg leading-relaxed text-gray-600 max-w-4xl mx-auto">
+                TradeSetu is a professional platform designed to connect manufacturers, distributors, storage providers, and retailers in a secure and scalable trade network. Experience seamless collaboration and growth in the modern trade ecosystem.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="bg-white py-20">
+    <div class="max-w-6xl mx-auto px-4">
+        <h2 class="text-4xl font-bold mb-12 text-center text-gray-900">Features</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200">
+                <h3 class="text-2xl font-bold mb-4 text-blue-600">Secure Transactions</h3>
+                <p class="text-gray-600">End-to-end encrypted and secure trade transactions with advanced security protocols.</p>
+            </div>
+            <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200">
+                <h3 class="text-2xl font-bold mb-4 text-blue-600">Multi-Stakeholder Ecosystem</h3>
+                <p class="text-gray-600">Connect with all stakeholders in the trade chain for comprehensive business solutions.</p>
+            </div>
+            <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200">
+                <h3 class="text-2xl font-bold mb-4 text-blue-600">Scalable Trade Network</h3>
+                <p class="text-gray-600">Grow your business with our scalable platform designed for enterprise-level operations.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="bg-blue-50 py-16">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center">
+            <h2 class="text-3xl font-bold mb-4 text-gray-900">Ready to Get Started?</h2>
+            <p class="text-lg mb-8 text-gray-600 max-w-2xl mx-auto">Join thousands of businesses already using TradeSetu to streamline their trade operations.</p>
+            <a href="{{ url_for('register') }}" class="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-all duration-300 hover:scale-105 font-semibold inline-block">
+                Start Your Free Account
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-white border-t border-gray-200 py-12">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center">
+            <h3 class="text-xl font-bold mb-4 text-gray-900">TradeSetu</h3>
+            <p class="text-gray-600 mb-6">Connecting Trade. Securing Growth.</p>
+            <p class="text-sm text-gray-500">© 2024 TradeSetu. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Global Navigation Bar -->
+<nav class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex items-center">
+                <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition duration-300">
+                    ← TradeSetu
+                </a>
+            </div>
+            <div class="flex items-center">
+                <a href="{{ url_for('logout') }}" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all duration-300 font-semibold">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-6 pt-24">
+    <div class="w-full max-w-md">
+        <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200 text-center">
+            <h2 class="text-3xl font-bold mb-4 text-gray-900">Welcome to TradeSetu</h2>
+            <p class="mb-6 text-gray-600">Login Successful. Welcome, {{ user.owner_name }} ({{ user.email }}).</p>
+            <div class="space-y-4">
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold text-blue-600 mb-2">Your Business</h3>
+                    <p class="text-gray-900">{{ user.business_name }}</p>
+                    <p class="text-sm text-gray-600">{{ user.stakeholder }} • {{ user.location }}</p>
+                </div>
+                <p class="text-sm text-gray-600">Explore the TradeSetu platform to connect with stakeholders and grow your business.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

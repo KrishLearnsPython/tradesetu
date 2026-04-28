@@ -84,6 +84,12 @@
                                 <p class="text-xs text-gray-500 text-center mt-1">Click to enlarge</p>
                             </div>
                         </div>
+                        {% if shipment.city or shipment.state or shipment.pincode %}
+                        <div class="mt-3 pt-3 border-t border-gray-200 text-sm">
+                            <span class="text-gray-600"><strong>📍 Destination:</strong> {{ shipment.city }}, {{ shipment.state }} - {{ shipment.pincode }}</span>
+                            {% if shipment.delivery_address %}<div class="text-xs text-gray-500 mt-1">{{ shipment.delivery_address }}</div>{% endif %}
+                        </div>
+                        {% endif %}
                     </li>
                     {% endfor %}
                 </ul>

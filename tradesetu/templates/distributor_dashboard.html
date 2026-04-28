@@ -85,8 +85,50 @@
                                             class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed">
                                         Confirm
                                     </button>
+                                    {% if s.status == 'IN_TRANSIT' %}
+                                        {% if s.transporter_name %}
+                                            <button onclick="openTransportForm('{{ s.shipment_id }}', '{{ s.transporter_name }}', '{{ s.vehicle_number }}', '{{ s.driver_name }}', '{{ s.driver_phone }}')"
+                                                class="bg-yellow-600 text-white px-3 py-2 rounded hover:bg-yellow-700 transition duration-200">
+                                                Update Transport Details
+                                            </button>
+                                        {% else %}
+                                            <button onclick="openTransportForm('{{ s.shipment_id }}', '', '', '', '')"
+                                                class="bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 transition duration-200">
+                                                Add Transport Details
+                                            </button>
+                                        {% endif %}
+                                        {% if storage_users %}
+                                        <div class="mt-2 flex gap-2 items-center">
+                                            <select id="storage_{{ s.shipment_id }}"
+                                                    class="border px-2 py-1 rounded text-sm">
+                                                {% for st in storage_users %}
+                                                    <option value="{{ st.user_id }}">{{ st.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button onclick="assignStorage('{{ s.shipment_id }}')"
+                                                class="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 transition duration-200">
+                                                Assign Storage
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    {% endif %}
                                 </td>
                             </tr>
+                            {% if s.transporter_name %}
+                            <tr class="bg-gray-50">
+                                <td colspan="5" class="px-6 py-2 text-sm text-gray-600">
+                                    <strong>Transport Details:</strong> {{ s.transporter_name }} | {{ s.vehicle_number }} | {{ s.driver_name }} | {{ s.driver_phone }}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% if s.city or s.state or s.pincode %}
+                            <tr class="bg-gray-50">
+                                <td colspan="5" class="px-6 py-2 text-sm text-gray-600">
+                                    <div><strong>📍 Delivery Location:</strong> {{ s.city }}, {{ s.state }} - {{ s.pincode }}</div>
+                                    {% if s.delivery_address %}<div class="text-xs text-gray-500 mt-1">{{ s.delivery_address }}</div>{% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -113,11 +155,51 @@
 
 </div>
 
+<!-- Transport Modal -->
+<div id="transportModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+
+    <form method="POST" action="/add_transport"
+          class="bg-white p-6 rounded shadow-md flex flex-col gap-3">
+
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" id="transport_shipment_id" name="shipment_id">
+
+        <input type="text" id="transporter_name" name="transporter_name" placeholder="Transporter Name" required
+               class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <input type="text" id="vehicle_number" name="vehicle_number" placeholder="Vehicle Number" required
+               class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <input type="text" id="driver_name" name="driver_name" placeholder="Driver Name" required
+               class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <input type="text" id="driver_phone" name="driver_phone" placeholder="Driver Phone" required
+               class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <div class="flex gap-2 mt-3">
+            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-200">
+                Save
+            </button>
+
+            <button type="button" onclick="closeTransportForm()"
+                class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition duration-200">
+                Cancel
+            </button>
+        </div>
+    </form>
+
+</div>
+
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
     let html5QrCode = null;
     let scanning = false;
     let activeShipment = null;
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
 
     function startScan(shipmentId) {
         if (scanning) return;
@@ -182,7 +264,8 @@
                             fetch("/verify_hash", {
                                 method: "POST",
                                 headers: {
-                                    "Content-Type": "application/json"
+                                    "Content-Type": "application/json",
+                                    "X-CSRFToken": getCsrfToken()
                                 },
                                 body: JSON.stringify({
                                     shipment_id: qrShipmentId,
@@ -257,7 +340,8 @@
         fetch("/verify_quantity", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCsrfToken()
             },
             body: JSON.stringify({
                 shipment_id: shipmentId,
@@ -272,6 +356,44 @@
         .catch(error => {
             console.error('Error:', error);
             alert("Verification failed");
+        });
+    }
+
+    function openTransportForm(id, tname, vehicle, driver, phone) {
+        document.getElementById("transport_shipment_id").value = id;
+        document.getElementById("transporter_name").value = tname || "";
+        document.getElementById("vehicle_number").value = vehicle || "";
+        document.getElementById("driver_name").value = driver || "";
+        document.getElementById("driver_phone").value = phone || "";
+        document.getElementById("transportModal").classList.remove("hidden");
+    }
+
+    function closeTransportForm() {
+        document.getElementById("transportModal").classList.add("hidden");
+    }
+
+    function assignStorage(shipmentId) {
+        let storageId = document.getElementById("storage_" + shipmentId).value;
+
+        fetch("/assign_storage", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCsrfToken()
+            },
+            body: JSON.stringify({
+                shipment_id: shipmentId,
+                storage_id: storageId
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert("Storage Assigned Successfully");
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Storage assignment failed");
         });
     }
 </script>

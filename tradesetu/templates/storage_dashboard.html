@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Header Navigation -->
+<nav class="bg-white shadow-md border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <a href="/" class="text-2xl font-bold text-blue-600">TradeSetu</a>
+            <div class="flex gap-6 items-center">
+                <a href="/storage_dashboard" class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium">
+                    Dashboard
+                </a>
+                <a href="/logout" class="text-red-600 hover:text-red-700 transition duration-200 font-medium">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Page Title Section -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900">Storage Dashboard</h2>
+            <p class="text-gray-600 mt-2">Welcome {{ session['business_name'] }}</p>
+            <p class="text-gray-500 mt-1">Manage shipments assigned to your storage facility</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if shipments %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-gray-300 rounded-lg">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Shipment ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Product Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Transport Details</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for s in shipments %}
+                            <tr class="hover:bg-gray-50 transition duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.shipment_id }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ s.product_name }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        {% if s.status == 'CREATED' %}bg-gray-100 text-gray-800
+                                        {% elif s.status == 'ASSIGNED' %}bg-yellow-100 text-yellow-800
+                                        {% elif s.status == 'IN_TRANSIT' %}bg-blue-100 text-blue-800
+                                        {% elif s.status == 'AT_STORAGE' %}bg-green-100 text-green-800
+                                        {% elif s.status == 'OUT_FOR_DELIVERY' %}bg-purple-100 text-purple-800
+                                        {% elif s.status == 'DELIVERED' %}bg-green-100 text-green-800
+                                        {% elif s.status == 'TAMPERED' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ s.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                    {% if s.transporter_name %}
+                                        {{ s.transporter_name }} | {{ s.vehicle_number }}<br>
+                                        {{ s.driver_name }} | {{ s.driver_phone }}
+                                    {% else %}
+                                        <span class="text-gray-400">Not assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                    {% if s.status == 'IN_TRANSIT' %}
+                                        <button onclick="startScan('{{ s.shipment_id }}')" class="bg-blue-600 text-white px-3 py-2 rounded mr-2">Scan & Verify</button>
+                                        <input type="number" id="qty_{{ s.shipment_id }}" disabled class="border px-2 py-1 rounded bg-gray-200 mr-2" placeholder="Enter received quantity">
+                                        <button onclick="confirmReceive('{{ s.shipment_id }}')" id="confirm_{{ s.shipment_id }}" disabled class="bg-green-600 text-white px-3 py-2 rounded">Confirm Receive</button>
+                                    {% elif s.status == 'AT_STORAGE' %}
+                                        <button onclick="openDeliveryForm('{{ s.shipment_id }}')" class="bg-orange-600 text-white px-3 py-2 rounded">Dispatch for Delivery</button>
+                                    {% else %}
+                                        <span class="text-gray-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% if s.city or s.state or s.pincode %}
+                            <tr class="bg-gray-50">
+                                <td colspan="5" class="px-6 py-2 text-sm text-gray-600">
+                                    <div><strong>📍 Delivery Location:</strong> {{ s.city }}, {{ s.state }} - {{ s.pincode }}</div>
+                                    {% if s.delivery_address %}<div class="text-xs text-gray-500 mt-1">{{ s.delivery_address }}</div>{% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-500 text-lg">No shipments assigned to your storage facility yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delivery Dispatch Modal -->
+<div id="deliveryModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
+    <form method="POST" action="/dispatch_delivery" class="bg-white p-6 rounded flex flex-col gap-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" id="delivery_shipment_id" name="shipment_id">
+        <input type="text" name="delivery_name" placeholder="Delivery Person Name" required class="border px-3 py-2 rounded">
+        <input type="text" name="delivery_phone" placeholder="Phone Number" required class="border px-3 py-2 rounded">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Confirm Dispatch</button>
+    </form>
+</div>
+
+<!-- QR Scanner Modal -->
+<div id="scannerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+    <div class="relative">
+        <div id="reader" style="width:300px;"></div>
+        <div class="absolute border-4 rounded-lg"
+             style="
+                width: 200px;
+                height: 200px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                border: 4px solid #00ff88;
+                box-shadow: 0 0 15px #00ff88;
+             ">
+        </div>
+    </div>
+    <button onclick="closeScanner()" class="absolute top-5 right-5 text-white text-2xl">✕</button>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+let html5QrCode = null;
+let scanning = false;
+
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
+function startScan(shipmentId) {
+    if (scanning) return;
+    scanning = true;
+
+    const modal = document.getElementById("scannerModal");
+    modal.classList.remove("hidden");
+
+    setTimeout(() => {
+        html5QrCode = new Html5Qrcode("reader");
+
+        Html5Qrcode.getCameras().then(devices => {
+            if (devices.length === 0) {
+                alert("No camera found");
+                closeScanner();
+                return;
+            }
+
+            let cameraId = devices[0].id;
+
+            html5QrCode.start(
+                cameraId,
+                {
+                    fps: 10,
+                    qrbox: { width: 200, height: 200 },
+                    aspectRatio: 1.0
+                },
+                (decodedText) => {
+                    let cleanQR = decodedText.trim().replace(/\n/g, "");
+
+                    if (!cleanQR.includes("|")) {
+                        alert("Invalid QR");
+                        return;
+                    }
+
+                    let [qrShipmentId, qrHash] = cleanQR.split("|");
+
+                    if (qrShipmentId !== shipmentId) {
+                        alert("Wrong QR");
+                        return;
+                    }
+
+                    fetch("/verify_hash", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": getCsrfToken()
+                        },
+                        body: JSON.stringify({
+                            shipment_id: qrShipmentId,
+                            qr_hash: qrHash
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status !== "valid") {
+                            alert("Tampered");
+                            return;
+                        }
+
+                        document.getElementById("qty_" + shipmentId).disabled = false;
+                        document.getElementById("confirm_" + shipmentId).disabled = false;
+                        alert("QR Verified");
+
+                        html5QrCode.stop();
+                        scanning = false;
+                        modal.classList.add("hidden");
+                    })
+                    .catch(err => {
+                        alert("Error verifying QR");
+                    });
+                },
+                (error) => {
+                    // ignore scanning noise
+                }
+            );
+        }).catch(err => {
+            alert("Error accessing camera");
+            closeScanner();
+        });
+    }, 500);
+}
+
+function openDeliveryForm(shipmentId) {
+    document.getElementById("delivery_shipment_id").value = shipmentId;
+    document.getElementById("deliveryModal").classList.remove("hidden");
+}
+
+function closeScanner() {
+    if (html5QrCode) {
+        html5QrCode.stop().catch(() => {});
+    }
+    scanning = false;
+    document.getElementById("scannerModal").classList.add("hidden");
+}
+
+function confirmReceive(shipmentId) {
+    let qty = document.getElementById("qty_" + shipmentId).value;
+    if (!qty) {
+        alert("Enter quantity");
+        return;
+    }
+
+    fetch("/verify_storage_qty", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+        },
+        body: JSON.stringify({
+            shipment_id: shipmentId,
+            received_qty: qty
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        location.reload();
+    })
+    .catch(err => {
+        alert("Error confirming receive");
+    });
+}
+</script>
+{% endblock %}

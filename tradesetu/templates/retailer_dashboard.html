@@ -7,12 +7,16 @@
         <div class="flex justify-between items-center h-16">
             <a href="/" class="text-2xl font-bold text-blue-600">TradeSetu</a>
             <div class="flex gap-6 items-center">
-                <a href="/retailer_dashboard" class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium">
+                <a href="/retailer_dashboard"
+                    class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium">
                     Dashboard
                 </a>
-                <a href="/logout" class="text-red-600 hover:text-red-700 transition duration-200 font-medium">
-                    Logout
-                </a>
+                <form action="{{ url_for('logout') }}" method="POST" class="inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="text-red-600 hover:text-red-700 transition duration-200 font-medium">
+                        Logout
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -29,35 +33,46 @@
 
         <div class="bg-white rounded-xl shadow-lg p-8">
             {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
             {% endwith %}
 
             {% if shipments %}
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white border border-gray-300 rounded-lg">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Shipment ID</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Product</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Quantity</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            {% for s in shipments %}
-                            <tr class="hover:bg-gray-50 transition duration-200">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.shipment_id }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ s.product_name }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ s.quantity }} units</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-300 rounded-lg">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Shipment ID</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Product</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Quantity</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Status</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                                Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for s in shipments %}
+                        <tr class="hover:bg-gray-50 transition duration-200">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.shipment_id
+                                }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ s.product_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ s.quantity }} units</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                                         {% if s.status == 'CREATED' %}bg-gray-100 text-gray-800
                                         {% elif s.status == 'ASSIGNED' %}bg-yellow-100 text-yellow-800
                                         {% elif s.status == 'IN_TRANSIT' %}bg-blue-100 text-blue-800
@@ -66,70 +81,74 @@
                                         {% elif s.status == 'DELIVERED' %}bg-green-100 text-green-800
                                         {% elif s.status == 'TAMPERED' %}bg-red-100 text-red-800
                                         {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                        {{ s.status }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {% if s.status == 'OUT_FOR_DELIVERY' %}
-                                        <button onclick="startScan('{{ s.shipment_id }}')" class="bg-blue-600 text-white px-3 py-2 rounded mr-2 hover:bg-blue-700 transition">Scan & Verify</button>
-                                        <button onclick="markDelivered('{{ s.shipment_id }}')" 
-                                            id="deliver_{{ s.shipment_id }}" 
-                                            disabled 
-                                            class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                            Mark Delivered
-                                        </button>
-                                    {% elif s.status == 'DELIVERED' %}
-                                        <span class="text-green-600 font-semibold">✓ Delivered</span>
-                                    {% else %}
-                                        <span class="text-gray-400">N/A</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <!-- Address Row -->
-                            <tr class="bg-gray-50">
-                                <td colspan="5" class="px-6 py-3 text-sm">
-                                    <div class="text-gray-700">
-                                        <strong>📍 Delivery Location:</strong> {{ s.city }}, {{ s.state }} - {{ s.pincode }}
-                                    </div>
-                                    {% if s.delivery_address %}<div class="text-xs text-gray-500 mt-1"><strong>Address:</strong> {{ s.delivery_address }}</div>{% endif %}
-                                    {% if s.delivery_name %}<div class="text-xs text-gray-500 mt-1"><strong>🚚 Delivery By:</strong> {{ s.delivery_name }} | {{ s.delivery_phone }}</div>{% endif %}
-                                </td>
-                            </tr>
-                            <!-- Timeline Row -->
-                            <tr class="bg-blue-50">
-                                <td colspan="5" class="px-6 py-3">
-                                    <div class="text-sm">
-                                        <strong class="text-blue-800">📋 Shipment Timeline:</strong>
-                                        <div class="mt-2 border-l-2 border-blue-300 pl-3">
-                                            {% for log in s.audit_logs %}
-                                                <div class="flex items-start mb-2">
-                                                    <div class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
-                                                    <div class="flex-1">
-                                                        <p class="text-sm text-gray-800">
-                                                            <span class="font-medium">{{ log.action }}</span>
-                                                            {% if log.description %} - {{ log.description }}{% endif %}
-                                                        </p>
-                                                        <p class="text-xs text-gray-500">
-                                                            {{ log.timestamp.strftime('%d %b %Y, %I:%M %p') }} by {{ log.role }}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            {% endfor %}
-                                            {% if not s.audit_logs %}
-                                                <p class="text-sm text-gray-500 italic">No timeline events recorded yet.</p>
-                                            {% endif %}
+                                    {{ s.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {% if s.status == 'OUT_FOR_DELIVERY' %}
+                                <button onclick="startScan('{{ s.shipment_id }}')"
+                                    class="bg-blue-600 text-white px-3 py-2 rounded mr-2 hover:bg-blue-700 transition">Scan
+                                    & Verify</button>
+                                <button onclick="markDelivered('{{ s.shipment_id }}')" id="deliver_{{ s.shipment_id }}"
+                                    disabled
+                                    class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Mark Delivered
+                                </button>
+                                {% elif s.status == 'DELIVERED' %}
+                                <span class="text-green-600 font-semibold">✓ Delivered</span>
+                                {% else %}
+                                <span class="text-gray-400">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <!-- Address Row -->
+                        <tr class="bg-gray-50">
+                            <td colspan="5" class="px-6 py-3 text-sm">
+                                <div class="text-gray-700">
+                                    <strong>📍 Delivery Location:</strong> {{ s.city }}, {{ s.state }} - {{ s.pincode }}
+                                </div>
+                                {% if s.delivery_address %}<div class="text-xs text-gray-500 mt-1">
+                                    <strong>Address:</strong> {{ s.delivery_address }}</div>{% endif %}
+                                {% if s.delivery_name %}<div class="text-xs text-gray-500 mt-1"><strong>🚚 Delivery
+                                        By:</strong> {{ s.delivery_name }} | {{ s.delivery_phone }}</div>{% endif %}
+                            </td>
+                        </tr>
+                        <!-- Timeline Row -->
+                        <tr class="bg-blue-50">
+                            <td colspan="5" class="px-6 py-3">
+                                <div class="text-sm">
+                                    <strong class="text-blue-800">📋 Shipment Timeline:</strong>
+                                    <div class="mt-2 border-l-2 border-blue-300 pl-3">
+                                        {% for log in s.audit_logs %}
+                                        <div class="flex items-start mb-2">
+                                            <div class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></div>
+                                            <div class="flex-1">
+                                                <p class="text-sm text-gray-800">
+                                                    <span class="font-medium">{{ log.action }}</span>
+                                                    {% if log.description %} - {{ log.description }}{% endif %}
+                                                </p>
+                                                <p class="text-xs text-gray-500">
+                                                    {{ log.created_at.strftime('%d %b %Y, %I:%M %p') }} by {{ log.role
+                                                    }}
+                                                </p>
+                                            </div>
                                         </div>
+                                        {% endfor %}
+                                        {% if not s.audit_logs %}
+                                        <p class="text-sm text-gray-500 italic">No timeline events recorded yet.</p>
+                                        {% endif %}
                                     </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
-                <div class="text-center py-12">
-                    <p class="text-gray-500 text-lg">No shipments assigned to your retail store yet.</p>
-                </div>
+            <div class="text-center py-12">
+                <p class="text-gray-500 text-lg">No shipments assigned to your retail store yet.</p>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -140,147 +159,149 @@
     <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
         <h3 class="text-2xl font-bold text-gray-900 mb-4">Scan QR Code</h3>
         <div id="reader" style="width:100%;"></div>
-        <button onclick="closeScanner()" class="w-full mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Close Scanner</button>
+        <button onclick="closeScanner()"
+            class="w-full mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">Close
+            Scanner</button>
     </div>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-let html5QrCode = null;
-let currentShipmentId = null;
+    let html5QrCode = null;
+    let currentShipmentId = null;
 
-function getCsrfToken() {
-    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-}
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
 
-function startScan(shipmentId) {
-    currentShipmentId = shipmentId;
-    document.getElementById('scannerModal').classList.remove('hidden');
-    
-    // Stop any existing scanner
-    if (html5QrCode) {
-        try {
-            html5QrCode.stop();
-        } catch (e) {
-            console.log('Scanner already stopped');
+    function startScan(shipmentId) {
+        currentShipmentId = shipmentId;
+        document.getElementById('scannerModal').classList.remove('hidden');
+
+        // Stop any existing scanner
+        if (html5QrCode) {
+            try {
+                html5QrCode.stop();
+            } catch (e) {
+                console.log('Scanner already stopped');
+            }
         }
-    }
-    
-    html5QrCode = new Html5Qrcode('reader');
-    
-    const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        rememberLastUsedCamera: true
-    };
-    
-    html5QrCode.start(
-        { facingMode: 'environment' },
-        config,
-        (decodedText) => onScanSuccess(decodedText),
-        (errorMessage) => onScanError(errorMessage)
-    );
-}
 
-function onScanSuccess(decodedText) {
-    console.log('QR Scanned:', decodedText);
-    
-    // Parse QR data: shipment_id|hash
-    const [qrShipmentId, qrHash] = decodedText.split('|');
-    
-    if (qrShipmentId !== currentShipmentId) {
-        alert('❌ Wrong QR code! This QR is for shipment ' + qrShipmentId);
-        return;
-    }
-    
-    // Stop scanner
-    if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            document.getElementById('scannerModal').classList.add('hidden');
-        });
-    }
-    
-    // Verify hash with backend
-    verifyQRHash(currentShipmentId, qrHash);
-}
+        html5QrCode = new Html5Qrcode('reader');
 
-function onScanError(errorMessage) {
-    // Silently ignore scanning errors
-}
+        const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            rememberLastUsedCamera: true
+        };
 
-function verifyQRHash(shipmentId, qrHash) {
-    const csrfToken = getCsrfToken();
-    
-    fetch('/verify_hash', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({
-            shipment_id: shipmentId,
-            qr_hash: qrHash
+        html5QrCode.start(
+            { facingMode: 'environment' },
+            config,
+            (decodedText) => onScanSuccess(decodedText),
+            (errorMessage) => onScanError(errorMessage)
+        );
+    }
+
+    function onScanSuccess(decodedText) {
+        console.log('QR Scanned:', decodedText);
+
+        // Parse QR data: shipment_id|hash
+        const [qrShipmentId, qrHash] = decodedText.split('|');
+
+        if (qrShipmentId !== currentShipmentId) {
+            alert('❌ Wrong QR code! This QR is for shipment ' + qrShipmentId);
+            return;
+        }
+
+        // Stop scanner
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('scannerModal').classList.add('hidden');
+            });
+        }
+
+        // Verify hash with backend
+        verifyQRHash(currentShipmentId, qrHash);
+    }
+
+    function onScanError(errorMessage) {
+        // Silently ignore scanning errors
+    }
+
+    function verifyQRHash(shipmentId, qrHash) {
+        const csrfToken = getCsrfToken();
+
+        fetch('/verify_hash', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                shipment_id: shipmentId,
+                qr_hash: qrHash
+            })
         })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'valid') {
-            // ✅ QR Verified - Enable the deliver button
-            document.getElementById('deliver_' + shipmentId).disabled = false;
-            alert('✅ QR Verified Successfully!\n\nYou can now mark this shipment as delivered.');
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'valid') {
+                    // ✅ QR Verified - Enable the deliver button
+                    document.getElementById('deliver_' + shipmentId).disabled = false;
+                    alert('✅ QR Verified Successfully!\n\nYou can now mark this shipment as delivered.');
+                } else {
+                    // ❌ QR Verification Failed
+                    alert('❌ QR Verification Failed!\n\nThis shipment may have been tampered with.');
+                }
+            })
+            .catch(error => {
+                console.error('Error verifying QR:', error);
+                alert('❌ Error verifying QR code. Please try again.');
+            });
+    }
+
+    function closeScanner() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('scannerModal').classList.add('hidden');
+            }).catch(() => {
+                document.getElementById('scannerModal').classList.add('hidden');
+            });
         } else {
-            // ❌ QR Verification Failed
-            alert('❌ QR Verification Failed!\n\nThis shipment may have been tampered with.');
+            document.getElementById('scannerModal').classList.add('hidden');
         }
-    })
-    .catch(error => {
-        console.error('Error verifying QR:', error);
-        alert('❌ Error verifying QR code. Please try again.');
-    });
-}
-
-function closeScanner() {
-    if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            document.getElementById('scannerModal').classList.add('hidden');
-        }).catch(() => {
-            document.getElementById('scannerModal').classList.add('hidden');
-        });
-    } else {
-        document.getElementById('scannerModal').classList.add('hidden');
     }
-}
 
-function markDelivered(shipmentId) {
-    if (!confirm('Are you sure you want to mark this shipment as delivered?')) {
-        return;
-    }
-    
-    const csrfToken = getCsrfToken();
-    
-    fetch('/mark_delivered', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify({
-            shipment_id: shipmentId
+    function markDelivered(shipmentId) {
+        if (!confirm('Are you sure you want to mark this shipment as delivered?')) {
+            return;
+        }
+
+        const csrfToken = getCsrfToken();
+
+        fetch('/mark_delivered', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                shipment_id: shipmentId
+            })
         })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'success') {
-            alert('✅ Shipment marked as delivered!');
-            location.reload();
-        } else {
-            alert('❌ Error: ' + (data.message || 'Failed to mark delivery'));
-        }
-    })
-    .catch(error => {
-        console.error('Error marking delivery:', error);
-        alert('❌ Error marking delivery. Please try again.');
-    });
-}
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('✅ Shipment marked as delivered!');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.message || 'Failed to mark delivery'));
+                }
+            })
+            .catch(error => {
+                console.error('Error marking delivery:', error);
+                alert('❌ Error marking delivery. Please try again.');
+            });
+    }
 </script>
 {% endblock %}

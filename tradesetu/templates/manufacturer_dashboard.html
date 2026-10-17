@@ -9,9 +9,17 @@
                 <div class="flex items-center">
                     <a href="/" class="text-xl font-bold text-brand-blue hover:text-brand-blue-hover">TradeSetu</a>
                 </div>
+
                 <div class="flex items-center">
-                    <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</a>
+                    <form action="{{ url_for('logout') }}" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit"
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                            Logout
+                        </button>
+                    </form>
                 </div>
+
             </div>
         </div>
     </nav>
@@ -31,10 +39,12 @@
 
             <!-- Action Buttons -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a href="/create_shipment" class="bg-brand-blue hover:bg-brand-blue-hover text-white px-6 py-4 rounded-lg text-center font-medium shadow-md transition duration-200">
+                <a href="/create_shipment"
+                    class="bg-brand-blue hover:bg-brand-blue-hover text-white px-6 py-4 rounded-lg text-center font-medium shadow-md transition duration-200">
                     Create Shipment
                 </a>
-                <a href="/my_shipments" class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg text-center font-medium shadow-md transition duration-200">
+                <a href="/my_shipments"
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg text-center font-medium shadow-md transition duration-200">
                     View My Shipments
                 </a>
             </div>

@@ -10,10 +10,15 @@
                     ← TradeSetu
                 </a>
             </div>
+
             <div class="flex items-center">
-                <a href="{{ url_for('logout') }}" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all duration-300 font-semibold">
-                    Logout
-                </a>
+                <form action="{{ url_for('logout') }}" method="POST" class="inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit"
+                        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all duration-300 font-semibold">
+                        Logout
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -30,7 +35,8 @@
                     <p class="text-gray-900">{{ user.business_name }}</p>
                     <p class="text-sm text-gray-600">{{ user.stakeholder }} • {{ user.location }}</p>
                 </div>
-                <p class="text-sm text-gray-600">Explore the TradeSetu platform to connect with stakeholders and grow your business.</p>
+                <p class="text-sm text-gray-600">Explore the TradeSetu platform to connect with stakeholders and grow
+                    your business.</p>
             </div>
         </div>
     </div>

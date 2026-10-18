@@ -3,3 +3,4 @@ python-dotenv
 Flask-WTF
 qrcode[pil]
 psycopg[binary]
+gunicorn

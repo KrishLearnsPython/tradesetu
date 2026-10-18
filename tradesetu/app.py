@@ -22,7 +22,9 @@ if not app.config['SECRET_KEY']:
         "SECRET_KEY is missing. Check your local .env file."
     )
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True when using HTTPS
+app.config['SESSION_COOKIE_SECURE'] = (
+    os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+)
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['WTF_CSRF_ENABLED'] = True
 
@@ -1437,6 +1439,25 @@ def my_shipments():
     """
     cursor.execute(shipment_query, (manufacturer_id,))
     shipments = cursor.fetchall()
+
+    # Recreate QR images if the deployment filesystem has lost them.
+    qr_folder = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "static",
+        "qr_codes",
+    )
+    os.makedirs(qr_folder, exist_ok=True)
+
+    for shipment in shipments:
+        qr_path = os.path.join(
+            qr_folder,
+            f"{shipment['shipment_id']}.png",
+        )
+        if not os.path.exists(qr_path):
+            generate_qr_code(
+                shipment['shipment_id'],
+                shipment['current_hash'],
+            )
 
     # Fetch distributors
     distributor_query = "SELECT id, business_name, pan_tan_id FROM users WHERE stakeholder = 'Distributor'"

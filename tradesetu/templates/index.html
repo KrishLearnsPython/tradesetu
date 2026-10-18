@@ -1,138 +1,448 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="relative min-h-screen">
+<div class="min-h-screen overflow-hidden bg-white text-slate-900">
 
-    <!-- Background Image -->
-    <div class="absolute inset-0">
-        <img src="{{ url_for('static', filename='images/bg.jpg') }}" 
-             class="w-full h-full object-cover blur-[2px] scale-105" />
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
+        <div class="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 sm:px-8">
+            <a href="{{ url_for('index') }}" class="flex items-center gap-3" aria-label="TradeSetu home">
+                <span
+                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#142B4A] text-white shadow-lg shadow-blue-950/10">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+                        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                            stroke-linejoin="round" />
+                        <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span>
+                    <span class="block text-xl font-extrabold tracking-tight text-[#142B4A]">TradeSetu</span>
+                    <span
+                        class="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:block">Supply
+                        chain visibility</span>
+                </span>
+            </a>
 
-        <!-- Gradient Overlay -->
-        <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
-
-        <!-- Optional blue tint (brand feel) -->
-        <div class="absolute inset-0 bg-blue-900/30"></div>
-    </div>
-
-    <!-- Content -->
-    <div class="relative z-10 text-white">
-
-        <!-- NAVBAR -->
-        <nav class="bg-black/40 backdrop-blur-md border-b border-white/20">
-            <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
-                <a href="/" class="text-xl font-bold hover:text-blue-400 transition">
-                    TradeSetu
-                </a>
-                <div class="space-x-4">
-                    <a href="{{ url_for('login') }}" 
-                       class="px-4 py-2 border border-white/30 rounded-lg hover:bg-white/10 transition">
-                        Login
-                    </a>
-                    <a href="{{ url_for('register') }}" 
-                       class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition">
-                        Register
-                    </a>
-                </div>
+            <div class="hidden items-center gap-8 md:flex">
+                <a href="#platform"
+                    class="text-sm font-medium text-slate-600 transition hover:text-blue-700">Platform</a>
+                <a href="#how-it-works" class="text-sm font-medium text-slate-600 transition hover:text-blue-700">How it
+                    works</a>
+                <a href="#features"
+                    class="text-sm font-medium text-slate-600 transition hover:text-blue-700">Features</a>
             </div>
-        </nav>
 
-        <!-- HERO -->
-        <section class="py-24 text-center">
-            <h1 class="text-6xl font-bold mb-6 drop-shadow-lg">
-                TradeSetu
-            </h1>
-
-            <p class="text-xl max-w-2xl mx-auto text-gray-200 mb-10 drop-shadow">
-                Tamper-Proof Supply Chain Tracking for Indian MSMEs.  
-                Secure shipments with QR-based verification and real-time tracking.
-            </p>
-
-            <div class="flex justify-center gap-6">
-                <a href="{{ url_for('login') }}" 
-                   class="bg-blue-600 px-8 py-4 rounded-lg hover:bg-blue-700 transition font-semibold">
-                    Login
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('login') }}"
+                    class="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:px-4">Sign
+                    in</a>
+                <a href="{{ url_for('register') }}"
+                    class="rounded-xl bg-[#2563EB] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 sm:px-5">
+                    Get started <span aria-hidden="true">→</span>
                 </a>
+            </div>
+        </div>
+    </nav>
 
-                <a href="{{ url_for('register') }}" 
-                   class="border border-white/30 px-8 py-4 rounded-lg hover:bg-white/10 transition font-semibold">
-                    Register
-                </a>
+    <!-- Hero -->
+    <main>
+        <section id="platform" class="relative">
+            <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+                <div class="absolute -right-40 -top-32 h-[460px] w-[460px] rounded-full bg-blue-100/70 blur-3xl"></div>
+                <div class="absolute -left-48 top-64 h-80 w-80 rounded-full bg-sky-50 blur-3xl"></div>
+            </div>
+
+            <div
+                class="relative mx-auto grid max-w-7xl items-center gap-14 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[1.02fr_0.98fr] lg:gap-12 lg:py-24">
+                <div class="fade-in max-w-2xl">
+                    <div
+                        class="mb-7 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-3.5 py-2 text-xs font-semibold text-blue-800 shadow-sm sm:text-sm">
+                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        Built for India's MSME supply chains
+                    </div>
+
+                    <h1
+                        class="text-4xl font-extrabold leading-[1.12] tracking-tight text-[#142B4A] sm:text-5xl lg:text-[62px]">
+                        Every shipment.
+                        <span class="block text-[#2563EB]">One trusted</span>
+                        journey.
+                    </h1>
+
+                    <p class="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+                        Bring manufacturers, distributors, storage partners and retailers onto one transparent workflow.
+                        Track shipment progress and verify records at every handoff.
+                    </p>
+
+                    <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+                        <a href="{{ url_for('register') }}"
+                            class="inline-flex items-center justify-center gap-3 rounded-xl bg-[#2563EB] px-6 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700">
+                            Create your account <span class="text-lg" aria-hidden="true">→</span>
+                        </a>
+                        <a href="{{ url_for('login') }}"
+                            class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+                            Sign in to TradeSetu
+                        </a>
+                    </div>
+
+                    <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-500">
+                        <span class="flex items-center gap-2"><span class="text-emerald-600">✓</span> Role-based
+                            workspaces</span>
+                        <span class="flex items-center gap-2"><span class="text-emerald-600">✓</span> QR-based
+                            verification</span>
+                        <span class="flex items-center gap-2"><span class="text-emerald-600">✓</span> Shipment audit
+                            trail</span>
+                    </div>
+                </div>
+
+                <!-- Product preview: illustrative UI, not live shipment data -->
+                <div class="relative fade-in lg:pl-3">
+                    <div class="absolute -inset-5 rounded-[2rem] bg-gradient-to-br from-blue-100/80 via-slate-100/40 to-sky-100/70 blur-xl"
+                        aria-hidden="true"></div>
+                    <div
+                        class="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/10">
+                        <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-7">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                    <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                                        <path d="M3 7h11v11H3zM14 11h4l3 3v4h-7" stroke="currentColor"
+                                            stroke-width="1.7" stroke-linejoin="round" />
+                                        <circle cx="7.5" cy="18" r="1.8" stroke="currentColor" stroke-width="1.7" />
+                                        <circle cx="17.5" cy="18" r="1.8" stroke="currentColor" stroke-width="1.7" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900">Shipment overview</p>
+                                    <p class="text-xs text-slate-500">Illustrative product preview</p>
+                                </div>
+                            </div>
+                            <span class="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">Demo
+                                view</span>
+                        </div>
+
+                        <div class="p-5 sm:p-7">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                    <p class="text-xs font-medium text-slate-500">Shipment reference</p>
+                                    <p class="mt-2 text-lg font-extrabold tracking-tight text-[#142B4A]">SHP••••••</p>
+                                    <p class="mt-1 text-xs text-slate-500">Example reference</p>
+                                </div>
+                                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+                                    <p class="text-xs font-medium text-slate-500">Workflow</p>
+                                    <p class="mt-2 text-lg font-extrabold text-emerald-700">Traceable</p>
+                                    <p class="mt-1 text-xs text-slate-500">Across handoffs</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 rounded-2xl border border-slate-100 p-4 sm:p-5">
+                                <div class="mb-5 flex items-center justify-between">
+                                    <p class="text-sm font-bold text-slate-800">Supply chain journey</p>
+                                    <span class="text-xs text-slate-400">Illustration</span>
+                                </div>
+                                <div class="space-y-0">
+                                    <div class="flex gap-3">
+                                        <div class="flex flex-col items-center">
+                                            <span
+                                                class="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                                <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" aria-hidden="true">
+                                                    <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2"
+                                                        stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
+                                            </span>
+                                            <span class="h-8 w-px bg-slate-200"></span>
+                                        </div>
+                                        <div class="flex-1 pb-5">
+                                            <p class="text-sm font-semibold text-slate-800">Manufacturer</p>
+                                            <p class="mt-1 text-xs leading-5 text-slate-500">Shipment created and
+                                                prepared for dispatch</p>
+                                        </div>
+                                        <span class="pt-2 text-xs font-medium text-emerald-700">Origin</span>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <div class="flex flex-col items-center">
+                                            <span
+                                                class="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                                                <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" aria-hidden="true">
+                                                    <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor"
+                                                        stroke-width="1.7" stroke-linejoin="round" />
+                                                </svg>
+                                            </span>
+                                            <span class="h-8 w-px bg-slate-200"></span>
+                                        </div>
+                                        <div class="flex-1 pb-5">
+                                            <p class="text-sm font-semibold text-slate-800">Distributor</p>
+                                            <p class="mt-1 text-xs leading-5 text-slate-500">Handoff and shipment
+                                                verification</p>
+                                        </div>
+                                        <span class="pt-2 text-xs font-medium text-blue-700">Handoff</span>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <div class="flex flex-col items-center">
+                                            <span
+                                                class="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                                                <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" aria-hidden="true">
+                                                    <path
+                                                        d="M3 21V8l9-5 9 5v13M8 21v-6h8v6M7 10h.01M12 10h.01M17 10h.01"
+                                                        stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                                        stroke-linejoin="round" />
+                                                </svg>
+                                            </span>
+                                            <span class="h-8 w-px bg-slate-200"></span>
+                                        </div>
+                                        <div class="flex-1 pb-5">
+                                            <p class="text-sm font-semibold text-slate-800">Storage</p>
+                                            <p class="mt-1 text-xs leading-5 text-slate-500">Receipt and status update
+                                            </p>
+                                        </div>
+                                        <span class="pt-2 text-xs font-medium text-slate-500">Checkpoint</span>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <div
+                                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#142B4A] text-white">
+                                            <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" aria-hidden="true">
+                                                <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8"
+                                                    stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-semibold text-slate-800">Retailer</p>
+                                            <p class="mt-1 text-xs leading-5 text-slate-500">Final receipt and
+                                                confirmation</p>
+                                        </div>
+                                        <span class="pt-2 text-xs font-medium text-slate-500">Delivery</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex items-start gap-3 rounded-xl bg-blue-50 px-4 py-3.5">
+                                <svg viewBox="0 0 24 24" fill="none" class="mt-0.5 h-5 w-5 shrink-0 text-blue-700"
+                                    aria-hidden="true">
+                                    <path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z"
+                                        stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                                    <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <p class="text-xs leading-5 text-blue-900"><strong>Designed for accountability.</strong>
+                                    QR verification and shipment records help stakeholders check information at each
+                                    handoff.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-center text-xs text-slate-400">Concept preview only — values shown are
+                        illustrative, not live platform metrics.</p>
+                </div>
             </div>
         </section>
 
-        <!-- ABOUT -->
-        <section class="py-20 text-center">
-            <h2 class="text-4xl font-bold mb-6">About TradeSetu</h2>
-
-            <p class="text-gray-300 max-w-4xl mx-auto text-lg">
-                TradeSetu is a tamper-proof supply chain tracking platform for Indian manufacturers, 
-                using QR verification and secure hashing to ensure complete transparency 
-                from dispatch to delivery.
-            </p>
+        <!-- Value strip -->
+        <section class="border-y border-slate-200 bg-slate-50/80">
+            <div class="mx-auto grid max-w-7xl gap-6 px-5 py-7 sm:grid-cols-3 sm:px-8">
+                <div class="flex items-center justify-center gap-3 sm:justify-start">
+                    <span
+                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm ring-1 ring-slate-200">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-2zM14 18h2v2h-2z"
+                                stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    <div>
+                        <p class="text-sm font-bold text-[#142B4A]">QR verification</p>
+                        <p class="text-xs text-slate-500">Check shipment references</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-3 sm:justify-center">
+                    <span
+                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm ring-1 ring-slate-200">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="M4 19V5M4 19h16M7 15l4-4 3 2 5-6" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    <div>
+                        <p class="text-sm font-bold text-[#142B4A]">Shipment visibility</p>
+                        <p class="text-xs text-slate-500">Follow workflow progress</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-center gap-3 sm:justify-end">
+                    <span
+                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm ring-1 ring-slate-200">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z" stroke="currentColor"
+                                stroke-width="1.7" stroke-linejoin="round" />
+                            <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    <div>
+                        <p class="text-sm font-bold text-[#142B4A]">Recorded handoffs</p>
+                        <p class="text-xs text-slate-500">Support operational trust</p>
+                    </div>
+                </div>
+            </div>
         </section>
 
-        <!-- FEATURES -->
-        <section class="py-20">
-            <h2 class="text-4xl font-bold text-center mb-12">Features</h2>
+        <!-- Features -->
+        <section id="features" class="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-24">
+            <div class="mx-auto max-w-2xl text-center">
+                <span class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">One connected workflow</span>
+                <h2 class="mt-4 text-3xl font-extrabold tracking-tight text-[#142B4A] sm:text-4xl">More clarity at every
+                    handoff</h2>
+                <p class="mt-4 text-base leading-7 text-slate-600">Keep the people moving goods connected through
+                    shipment records, role-specific tools and verification checkpoints.</p>
+            </div>
 
-            <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
+            <div class="mt-12 grid gap-5 md:grid-cols-3">
+                <article
+                    class="group rounded-2xl border border-slate-200 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-900/5">
+                    <div
+                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+                            <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-2zM14 18h2v2h-2z"
+                                stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-6 text-lg font-bold text-[#142B4A]">QR-based verification</h3>
+                    <p class="mt-3 text-sm leading-7 text-slate-600">Use shipment QR references to support verification
+                        as goods move between participating businesses.</p>
+                    <div class="mt-5 text-sm font-semibold text-blue-700">Verify with confidence</div>
+                </article>
 
-                <div class="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-xl">
-                    <h3 class="text-2xl font-bold mb-4 text-blue-400">
-                        Tamper-Proof Verification
-                    </h3>
-                    <p class="text-gray-300">
-                        QR codes and hash matching ensure shipment integrity at every stage.
-                    </p>
+                <article
+                    class="group rounded-2xl border border-slate-200 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-900/5">
+                    <div
+                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+                            <path d="M3 7h11v11H3zM14 11h4l3 3v4h-7" stroke="currentColor" stroke-width="1.7"
+                                stroke-linejoin="round" />
+                            <circle cx="7.5" cy="18" r="1.8" stroke="currentColor" stroke-width="1.7" />
+                            <circle cx="17.5" cy="18" r="1.8" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-6 text-lg font-bold text-[#142B4A]">Shipment lifecycle</h3>
+                    <p class="mt-3 text-sm leading-7 text-slate-600">Follow the journey from manufacturer to
+                        distributor, storage partner and retailer through a shared workflow.</p>
+                    <div class="mt-5 text-sm font-semibold text-blue-700">Follow each stage</div>
+                </article>
+
+                <article
+                    class="group rounded-2xl border border-slate-200 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-900/5">
+                    <div
+                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+                            <path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z" stroke="currentColor"
+                                stroke-width="1.7" stroke-linejoin="round" />
+                            <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-6 text-lg font-bold text-[#142B4A]">Integrity and audit records</h3>
+                    <p class="mt-3 text-sm leading-7 text-slate-600">Use hash checks and recorded events to help
+                        identify inconsistencies and support accountability.</p>
+                    <div class="mt-5 text-sm font-semibold text-blue-700">Support traceability</div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Workflow -->
+        <section id="how-it-works" class="bg-[#F5F7FA]">
+            <div class="mx-auto max-w-7xl px-5 py-20 sm:px-8 sm:py-24">
+                <div class="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-[0.2em] text-blue-700">How it works</span>
+                        <h2
+                            class="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-[#142B4A] sm:text-4xl">
+                            From dispatch to delivery, with a clearer record.</h2>
+                        <p class="mt-5 leading-7 text-slate-600">Each stakeholder has a role in the shipment journey.
+                            TradeSetu brings the workflow and verification steps together in one platform.</p>
+                        <a href="{{ url_for('register') }}"
+                            class="mt-7 inline-flex items-center gap-2 font-bold text-blue-700 hover:text-blue-800">Join
+                            the network <span aria-hidden="true">→</span></a>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                            <span
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#142B4A] text-sm font-extrabold text-white">01</span>
+                            <div>
+                                <h3 class="font-bold text-[#142B4A]">Create the shipment</h3>
+                                <p class="mt-1 text-sm leading-6 text-slate-600">The manufacturer records shipment
+                                    details and starts its journey.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                            <span
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-extrabold text-white">02</span>
+                            <div>
+                                <h3 class="font-bold text-[#142B4A]">Verify each handoff</h3>
+                                <p class="mt-1 text-sm leading-6 text-slate-600">Participating stakeholders update the
+                                    workflow and check shipment information.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                            <span
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-sm font-extrabold text-white">03</span>
+                            <div>
+                                <h3 class="font-bold text-[#142B4A]">Record delivery</h3>
+                                <p class="mt-1 text-sm leading-6 text-slate-600">The final stage is recorded to support
+                                    visibility and follow-up across the supply chain.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-xl">
-                    <h3 class="text-2xl font-bold mb-4 text-blue-400">
-                        Multi-Stage Validation
-                    </h3>
-                    <p class="text-gray-300">
-                        Manufacturer, distributor, storage, and retailer verify shipments step-by-step.
-                    </p>
-                </div>
-
-                <div class="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-xl">
-                    <h3 class="text-2xl font-bold mb-4 text-blue-400">
-                        Role-Based Access
-                    </h3>
-                    <p class="text-gray-300">
-                        Secure dashboards for each stakeholder ensure controlled operations.
-                    </p>
-                </div>
-
             </div>
         </section>
 
         <!-- CTA -->
-        <section class="py-20 text-center">
-            <h2 class="text-3xl font-bold mb-4">
-                Ready to Transform Your Supply Chain?
-            </h2>
-
-            <p class="text-gray-300 mb-8">
-                Reduce disputes, prevent losses, and build trust across your logistics network.
-            </p>
-
-            <a href="{{ url_for('register') }}" 
-               class="bg-blue-600 px-8 py-4 rounded-lg hover:bg-blue-700 transition font-semibold">
-                Get Started
-            </a>
+        <section class="px-5 py-20 sm:px-8 sm:py-24">
+            <div
+                class="relative mx-auto max-w-7xl overflow-hidden rounded-3xl bg-[#142B4A] px-6 py-12 text-center sm:px-12 sm:py-16">
+                <div class="pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl"
+                    aria-hidden="true"></div>
+                <div class="pointer-events-none absolute -bottom-40 -left-20 h-80 w-80 rounded-full bg-sky-400/10 blur-3xl"
+                    aria-hidden="true"></div>
+                <div class="relative mx-auto max-w-2xl">
+                    <span
+                        class="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-100">A
+                        more connected supply chain</span>
+                    <h2 class="mt-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Make every handoff
+                        count.</h2>
+                    <p class="mx-auto mt-4 max-w-xl leading-7 text-blue-100/80">Bring your business workflow into one
+                        place and make shipment information easier to follow.</p>
+                    <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                        <a href="{{ url_for('register') }}"
+                            class="rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-[#142B4A] transition hover:bg-blue-50">Get
+                            started</a>
+                        <a href="{{ url_for('login') }}"
+                            class="rounded-xl border border-white/30 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/10">Already
+                            registered? Sign in</a>
+                    </div>
+                </div>
+            </div>
         </section>
+    </main>
 
-        <!-- FOOTER -->
-        <footer class="bg-black/30 border-t border-white/20 py-10 text-center">
-            <h3 class="text-xl font-bold mb-2">TradeSetu</h3>
-            <p class="text-gray-400 mb-4">Connecting Trade. Securing Growth.</p>
-            <p class="text-sm text-gray-500">
-                © 2026 TradeSetu | Atharva Jagtap & Krish Gupta
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white">
+        <div class="mx-auto flex max-w-7xl flex-col items-center gap-5 px-5 py-8 text-center sm:px-8">
+            <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                <span
+                    class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#142B4A] text-sm font-extrabold text-white">T</span>
+                <span class="font-extrabold text-[#142B4A]">TradeSetu</span>
+            </a>
+
+            <p class="text-sm text-slate-600">
+                Connecting trade. Building trust.
             </p>
-        </footer>
 
-    </div>
+            <div class="h-px w-full max-w-md bg-slate-200"></div>
+
+            <p class="text-sm font-semibold text-slate-800">
+                Created by Krish Gupta and Atharva Jagtap from MIT ADT University
+            </p>
+
+
+        </div>
+    </footer>
 </div>
 {% endblock %}

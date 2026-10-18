@@ -1,119 +1,384 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Navbar -->
-    <nav class="bg-white shadow-lg">
+<style>
+    .ts-shell {
+        min-height: 100vh;
+        background: #F5F7FA;
+        color: #172B4D;
+    }
+
+    .ts-brand {
+        color: #142B4A;
+    }
+
+    .ts-muted {
+        color: #64748B;
+    }
+
+    .ts-card {
+        background: #fff;
+        border: 1px solid #E5EAF1;
+        border-radius: 16px;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, .035);
+    }
+
+    .ts-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 650;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+
+    .ts-input {
+        width: 100%;
+        border: 1px solid #CBD5E1;
+        border-radius: 9px;
+        padding: 11px 13px;
+        font-size: 14px;
+        color: #142B4A;
+        background: #fff;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .ts-input:focus {
+        outline: none;
+        border-color: #2563EB;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .13);
+    }
+
+    .ts-input::placeholder {
+        color: #94A3B8;
+    }
+
+    .ts-input:disabled {
+        background: #F8FAFC;
+    }
+
+    .ts-section-title {
+        font-size: 16px;
+        font-weight: 750;
+        color: #142B4A;
+    }
+
+    .ts-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 9px;
+        padding: 12px 18px;
+        font-size: 14px;
+        font-weight: 700;
+        transition: background .15s;
+    }
+
+    .ts-btn-primary {
+        color: white;
+        background: #2563EB;
+    }
+
+    .ts-btn-primary:hover {
+        background: #1D4ED8;
+    }
+
+    .ts-btn-secondary {
+        color: #334155;
+        background: #F1F5F9;
+    }
+
+    .ts-btn-secondary:hover {
+        background: #E2E8F0;
+    }
+
+    .ts-step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        font-weight: 650;
+        color: #64748B;
+    }
+
+    .ts-step-number {
+        width: 29px;
+        height: 29px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #DBEAFE;
+        color: #1D4ED8;
+        font-weight: 800;
+    }
+</style>
+
+<div class="ts-shell">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/" class="text-xl font-bold text-brand-blue hover:text-brand-blue-hover">TradeSetu</a>
-                </div>
-                <div class="flex items-center">
-                    <a href="/dashboard" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Back to Dashboard</a>
-                </div>
+            <div class="flex items-center justify-between gap-4" style="min-height:72px">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                    <span class="flex items-center justify-center rounded-xl text-white font-bold text-lg"
+                        style="width:40px;height:40px;background:#142B4A">T</span>
+                    <span>
+                        <span class="block text-xl font-extrabold tracking-tight ts-brand">TradeSetu</span>
+                        <span class="block text-xs ts-muted">Supply chain workspace</span>
+                    </span>
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="ts-btn ts-btn-secondary text-sm">← Dashboard</a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
-            <h1 class="text-3xl font-bold text-gray-900 mb-8">Create Shipment</h1>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <!-- Page heading -->
+        <div class="mb-8">
+            <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:#2563EB">Shipment management</p>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight ts-brand">Create a new shipment</h1>
+            <p class="text-sm sm:text-base ts-muted mt-2 max-w-2xl">Enter product, delivery, and retailer details to
+                register a shipment in your supply chain.</p>
+        </div>
 
-            <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md">
-                <form method="POST" action="{{ url_for('create_shipment') }}" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <!-- Main form -->
+            <section class="lg:col-span-2 ts-card overflow-hidden">
+                <div class="p-5 sm:p-7 border-b" style="border-color:#E5EAF1">
+                    <div class="flex items-center gap-3">
+                        <span class="flex items-center justify-center rounded-xl"
+                            style="width:42px;height:42px;background:#DBEAFE;color:#1D4ED8">
+                            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.8" aria-hidden="true">
+                                <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+                            </svg>
+                        </span>
+                        <div>
+                            <h2 class="text-lg font-bold ts-brand">Shipment details</h2>
+                            <p class="text-sm ts-muted mt-1">Complete all required fields before submitting.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="shipment-form" method="POST" action="{{ url_for('create_shipment') }}"
+                    class="p-5 sm:p-7 space-y-8">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
-                    <div class="mb-6">
-                        <label for="product_name" class="block text-lg font-medium text-gray-700 mb-2">Product Name</label>
-                        <input type="text" id="product_name" name="product_name" required
-                               class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
 
-                    <div class="mb-6">
-                        <label for="product_id" class="block text-lg font-medium text-gray-700 mb-2">Product ID</label>
-                        <input type="text" id="product_id" name="product_id" required
-                               class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label for="quantity" class="block text-lg font-medium text-gray-700 mb-2">Quantity</label>
-                            <input type="number" id="quantity" name="quantity" required min="1"
-                                   class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <!-- Product details -->
+                    <section>
+                        <div class="flex items-center gap-3 mb-5">
+                            <span class="ts-step-number">1</span>
+                            <h3 class="ts-section-title">Product information</h3>
                         </div>
 
-                        <div>
-                            <label for="price_per_unit" class="block text-lg font-medium text-gray-700 mb-2">Price per Unit</label>
-                            <input type="number" id="price_per_unit" name="price_per_unit" step="0.01" required min="0"
-                                   class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </div>
-                    </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div class="sm:col-span-2">
+                                <label for="product_name" class="ts-label">Product name <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" id="product_name" name="product_name" required maxlength="200"
+                                    autocomplete="off" class="ts-input" placeholder="e.g. Organic wheat flour">
+                            </div>
 
-                    <div class="mb-6">
-                        <label for="total_price" class="block text-lg font-medium text-gray-700 mb-2">Total Price</label>
-                        <input type="text" id="total_price" name="total_price" readonly
-                               class="w-full px-4 py-3 text-lg bg-gray-50 border border-gray-300 rounded-lg">
-                    </div>
-
-                    <div class="border-t-2 pt-6 mt-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Delivery Information</h3>
-                        
-                        <div class="mb-6">
-                            <label for="delivery_address" class="block text-lg font-medium text-gray-700 mb-2">Delivery Address</label>
-                            <textarea id="delivery_address" name="delivery_address" required rows="3"
-                                      class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                      placeholder="Enter complete delivery address"></textarea>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                            <div>
-                                <label for="city" class="block text-lg font-medium text-gray-700 mb-2">City</label>
-                                <input type="text" id="city" name="city" required
-                                       class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                       placeholder="City">
+                            <div class="sm:col-span-2">
+                                <label for="product_id" class="ts-label">Product ID <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" id="product_id" name="product_id" required maxlength="100"
+                                    autocomplete="off" class="ts-input" placeholder="Enter your product reference">
+                                <p class="text-xs ts-muted mt-2">Use the product identifier from your inventory records.
+                                </p>
                             </div>
 
                             <div>
-                                <label for="state" class="block text-lg font-medium text-gray-700 mb-2">State</label>
-                                <input type="text" id="state" name="state" required
-                                       class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                       placeholder="State">
+                                <label for="quantity" class="ts-label">Quantity (units) <span
+                                        class="text-red-500">*</span></label>
+                                <input type="number" id="quantity" name="quantity" required min="1" step="1"
+                                    inputmode="numeric" class="ts-input" placeholder="0">
                             </div>
 
                             <div>
-                                <label for="pincode" class="block text-lg font-medium text-gray-700 mb-2">Pincode</label>
-                                <input type="text" id="pincode" name="pincode" required
-                                       class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                       placeholder="Pincode">
+                                <label for="price_per_unit" class="ts-label">Price per unit (₹) <span
+                                        class="text-red-500">*</span></label>
+                                <input type="number" id="price_per_unit" name="price_per_unit" step="0.01" required
+                                    min="0" inputmode="decimal" class="ts-input" placeholder="0.00">
+                            </div>
+
+                            <div class="sm:col-span-2 rounded-xl p-4 flex items-center justify-between gap-4"
+                                style="background:#F5F8FF;border:1px solid #DBEAFE">
+                                <div>
+                                    <p class="text-sm font-semibold ts-brand">Calculated shipment value</p>
+                                    <p class="text-xs ts-muted mt-1">Quantity × price per unit</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs ts-muted">Total price</p>
+                                    <p id="total-display" class="text-2xl font-extrabold ts-brand">₹0.00</p>
+                                    <input type="hidden" id="total_price" name="total_price" value="0.00">
+                                </div>
+                            </div>
+                            <p id="price-error" class="hidden sm:col-span-2 text-sm text-red-600" role="alert">Please
+                                enter a valid quantity and price.</p>
+                        </div>
+                    </section>
+
+                    <div class="border-t" style="border-color:#E5EAF1"></div>
+
+                    <!-- Delivery details -->
+                    <section>
+                        <div class="flex items-center gap-3 mb-5">
+                            <span class="ts-step-number">2</span>
+                            <h3 class="ts-section-title">Delivery information</h3>
+                        </div>
+
+                        <div class="space-y-5">
+                            <div>
+                                <label for="delivery_address" class="ts-label">Full delivery address <span
+                                        class="text-red-500">*</span></label>
+                                <textarea id="delivery_address" name="delivery_address" required maxlength="1000"
+                                    rows="3" class="ts-input"
+                                    placeholder="Building, street, area, and other address details"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                                <div>
+                                    <label for="city" class="ts-label">City <span class="text-red-500">*</span></label>
+                                    <input type="text" id="city" name="city" required maxlength="100"
+                                        autocomplete="address-level2" class="ts-input" placeholder="City">
+                                </div>
+                                <div>
+                                    <label for="state" class="ts-label">State <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" id="state" name="state" required maxlength="100"
+                                        autocomplete="address-level1" class="ts-input" placeholder="State">
+                                </div>
+                                <div>
+                                    <label for="pincode" class="ts-label">PIN code <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" id="pincode" name="pincode" required inputmode="numeric"
+                                        pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="postal-code"
+                                        class="ts-input" placeholder="6 digits"
+                                        title="Enter a valid six-digit Indian PIN code">
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="border-t-2 pt-6 mt-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Select Target Retailer</h3>
-                        
-                        <div class="mb-6">
-                            <label for="retailer_id" class="block text-lg font-medium text-gray-700 mb-2">Retailer</label>
+                    <div class="border-t" style="border-color:#E5EAF1"></div>
+
+                    <!-- Retailer selection -->
+                    <section>
+                        <div class="flex items-center gap-3 mb-5">
+                            <span class="ts-step-number">3</span>
+                            <h3 class="ts-section-title">Assign target retailer</h3>
+                        </div>
+
+                        <label for="retailer_id" class="ts-label">Retailer <span class="text-red-500">*</span></label>
+                        <div class="relative">
                             <select id="retailer_id" name="retailer_id" required
-                                    class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                class="ts-input appearance-none cursor-pointer pr-12"
+                                style="-webkit-appearance:none; appearance:none; background-image:none;">
                                 <option value="">Select a retailer</option>
                                 {% for r in retailers %}
-                                    <option value="{{ r.user_id }}">{{ r.name }}</option>
+                                <option value="{{ r.user_id }}">{{ r.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-                    </div>
 
-                    <div class="mb-6">
-                        <button type="submit" class="w-full bg-blue-600 text-white py-3 text-lg rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
-                            Create Shipment
-                        </button>
+
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4"
+                                style="color:#64748B">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" aria-hidden="true">
+                                    <path d="m7 10 5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </span>
+                        </div>
+                        <p class="text-xs ts-muted mt-2">Choose the retailer responsible for receiving this
+                            shipment.
+                        </p>
+
+                        {% if not retailers %}
+                        <p class="text-sm mt-3 rounded-lg p-3" style="background:#FFF7ED;color:#9A3412">
+                            No retailers are currently available to select. You may need to register or onboard a
+                            retailer before creating this shipment.
+                        </p>
+                        {% endif %}
+                    </section>
+
+                    <div class="border-t pt-6" style="border-color:#E5EAF1">
+                        <div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-between sm:items-center">
+                            <a href="{{ url_for('dashboard') }}" class="ts-btn ts-btn-secondary">Cancel</a>
+                            <button type="submit" id="create-shipment-btn" class="ts-btn ts-btn-primary">
+                                <span>Create shipment</span>
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" aria-hidden="true">
+                                    <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </div>
+
                     </div>
                 </form>
-            </div>
+            </section>
+
+            <!-- Side information -->
+            <aside class="space-y-5">
+                <section class="rounded-2xl p-6 text-white" style="background:linear-gradient(145deg,#142B4A,#1E4775)">
+                    <div class="flex items-center justify-center rounded-xl mb-5"
+                        style="width:46px;height:46px;background:rgba(255,255,255,.12)">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.7" aria-hidden="true">
+                            <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z" stroke-linejoin="round" />
+                            <path d="m3.5 7.7 8.5 4.5 8.5-4.5M12 12.2V21" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold">A clearer supply chain</h2>
+                    <p class="text-sm mt-2 leading-6" style="color:#D7E6F8">Register shipment details accurately so
+                        authorized supply-chain partners can follow the shipment through its workflow.</p>
+                    <div class="mt-6 space-y-4">
+                        <div class="flex gap-3 items-start">
+                            <span class="font-bold" style="color:#93C5FD">01</span>
+                            <div>
+                                <p class="text-sm font-semibold">Product record</p>
+                                <p class="text-xs mt-1" style="color:#D7E6F8">Identify the goods and shipment value.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 items-start">
+                            <span class="font-bold" style="color:#93C5FD">02</span>
+                            <div>
+                                <p class="text-sm font-semibold">Delivery destination</p>
+                                <p class="text-xs mt-1" style="color:#D7E6F8">Provide complete, accurate location
+                                    details.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 items-start">
+                            <span class="font-bold" style="color:#93C5FD">03</span>
+                            <div>
+                                <p class="text-sm font-semibold">Retailer assignment</p>
+                                <p class="text-xs mt-1" style="color:#D7E6F8">Select the intended receiving business.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="ts-card p-5">
+                    <h3 class="font-bold ts-brand">Before you submit</h3>
+                    <ul class="mt-4 space-y-3 text-sm ts-muted">
+                        <li class="flex gap-2"><span style="color:#16845B">✓</span><span>Double-check product ID and
+                                quantity.</span></li>
+                        <li class="flex gap-2"><span style="color:#16845B">✓</span><span>Confirm the price per unit is
+                                correct.</span></li>
+                        <li class="flex gap-2"><span style="color:#16845B">✓</span><span>Verify the PIN code and full
+                                address.</span></li>
+                        <li class="flex gap-2"><span style="color:#16845B">✓</span><span>Choose the correct target
+                                retailer.</span></li>
+                    </ul>
+                </section>
+            </aside>
         </div>
+
+        <footer class="mt-10 pt-6 border-t text-center text-xs ts-muted" style="border-color:#E2E8F0">
+            <p>TradeSetu · Trusted supply chain visibility for Indian MSMEs</p>
+            <p class="mt-1">Created by Krish Gupta and Atharva Jagtap</p>
+        </footer>
     </main>
 </div>
 
@@ -121,14 +386,53 @@
     const quantityInput = document.getElementById('quantity');
     const priceInput = document.getElementById('price_per_unit');
     const totalPriceInput = document.getElementById('total_price');
+    const totalDisplay = document.getElementById('total-display');
+    const priceError = document.getElementById('price-error');
+    const shipmentForm = document.getElementById('shipment-form');
 
     function calculateTotalPrice() {
-        const quantity = parseFloat(quantityInput.value) || 0;
-        const price = parseFloat(priceInput.value) || 0;
-        totalPriceInput.value = (quantity * price).toFixed(2);
+        const quantity = Number(quantityInput.value);
+        const price = Number(priceInput.value);
+
+        const validQuantity = quantityInput.value !== '' &&
+            Number.isSafeInteger(quantity) && quantity >= 1;
+        const validPrice = priceInput.value !== '' &&
+            Number.isFinite(price) && price >= 0;
+
+        if (validQuantity && validPrice) {
+            const total = quantity * price;
+            if (Number.isFinite(total)) {
+                totalPriceInput.value = total.toFixed(2);
+                totalDisplay.textContent = '₹' + total.toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+                priceError.classList.add('hidden');
+                return true;
+            }
+        }
+
+        totalPriceInput.value = '0.00';
+        totalDisplay.textContent = '₹0.00';
+        return false;
     }
 
     quantityInput.addEventListener('input', calculateTotalPrice);
     priceInput.addEventListener('input', calculateTotalPrice);
+
+    shipmentForm.addEventListener('submit', function (event) {
+        const quantity = Number(quantityInput.value);
+        const price = Number(priceInput.value);
+        const validQuantity = quantityInput.value !== '' &&
+            Number.isSafeInteger(quantity) && quantity >= 1;
+        const validPrice = priceInput.value !== '' &&
+            Number.isFinite(price) && price >= 0;
+
+        if (!validQuantity || !validPrice || !calculateTotalPrice()) {
+            event.preventDefault();
+            priceError.classList.remove('hidden');
+            (!validQuantity ? quantityInput : priceInput).focus();
+        }
+    });
 </script>
 {% endblock %}

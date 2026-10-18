@@ -1,62 +1,327 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 flex items-center justify-center px-6">
-    <div class="w-full max-w-2xl">
-        <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
-            <h1 class="text-3xl font-bold text-gray-900 mb-6">Verify Shipment</h1>
+<style>
+    .ts-verify-page {
+        min-height: 100vh;
+        background: #F5F7FA;
+        color: #172B4D;
+    }
 
-            <!-- Shipment Details -->
-            <div class="mb-6">
-                <h2 class="text-xl font-semibold mb-4">Shipment Details</h2>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><strong>Shipment ID:</strong> {{ shipment.shipment_id }}</div>
-                    <div><strong>Product Name:</strong> {{ shipment.product_name }}</div>
-                    <div><strong>Product ID:</strong> {{ shipment.product_id }}</div>
-                    <div><strong>Stored Quantity:</strong> {{ shipment.quantity }}</div>
-                    <div><strong>Price per Unit:</strong> ${{ shipment.price_per_unit }}</div>
-                    <div><strong>Total Price:</strong> ${{ shipment.total_price }}</div>
-                    <div><strong>Status:</strong> {{ shipment.status }}</div>
-                    {% if verification_message %}
-                        <div><strong>Hash Valid:</strong> 
-                            {% if hash_valid %}
-                                <span class="text-green-600">Yes</span>
-                            {% else %}
-                                <span class="text-red-600">No</span>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+    .ts-verify-card {
+        background: #fff;
+        border: 1px solid #E5EAF1;
+        border-radius: 16px;
+        box-shadow: 0 3px 12px rgba(15, 23, 42, .035);
+    }
 
-            <!-- Verification Messages -->
-            {% if verification_message %}
-                <div class="mb-6 p-4 rounded-lg {% if verification_status == 'verified' %}bg-green-100 text-green-800{% elif verification_status == 'tampered' %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                    {{ verification_message }}
-                </div>
-            {% endif %}
+    .ts-verify-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #64748B;
+    }
 
-            <!-- Quantity Input Form -->
-            {% if hash_valid and not verification_message %}
-                <form method="POST" class="space-y-4">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2 text-gray-700">Enter Received Quantity</label>
-                        <input type="number" name="received_quantity" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" required min="0">
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 font-semibold">
-                        Verify Quantity
-                    </button>
-                </form>
-            {% endif %}
+    .ts-verify-value {
+        margin-top: 6px;
+        font-size: 15px;
+        font-weight: 650;
+        color: #142B4A;
+        overflow-wrap: anywhere;
+    }
 
-            <!-- Back Button -->
-            <div class="mt-6 text-center">
-                <a href="{{ url_for('distributor_dashboard') }}" class="text-blue-600 hover:text-blue-700 transition duration-300 font-semibold">
-                    ← Back to Dashboard
+    .ts-verify-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 18px;
+        border-radius: 9px;
+        background: #2563EB;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        transition: background .15s;
+    }
+
+    .ts-verify-btn:hover {
+        background: #1D4ED8;
+    }
+
+    .ts-verify-input {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        padding: 12px 14px;
+        border: 1px solid #CBD5E1;
+        border-radius: 9px;
+        background: white;
+        color: #142B4A;
+        font-size: 14px;
+    }
+
+    .ts-verify-input:focus {
+        outline: none;
+        border-color: #2563EB;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .ts-result {
+        border: 1px solid;
+        border-radius: 12px;
+        padding: 16px;
+    }
+
+    .ts-result-verified {
+        background: #F0FDF4;
+        border-color: #BBF7D0;
+        color: #166534;
+    }
+
+    .ts-result-tampered {
+        background: #FEF2F2;
+        border-color: #FECACA;
+        color: #991B1B;
+    }
+
+    .ts-result-pending {
+        background: #FFFBEB;
+        border-color: #FDE68A;
+        color: #92400E;
+    }
+
+    .ts-status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: #F1F5F9;
+        color: #334155;
+        font-size: 11px;
+        font-weight: 750;
+    }
+</style>
+
+<div class="ts-verify-page">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between gap-4" style="min-height:72px">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                    <span class="flex items-center justify-center rounded-xl text-white font-bold text-lg"
+                        style="width:40px;height:40px;background:#142B4A">T</span>
+                    <span>
+                        <span class="block text-xl font-extrabold tracking-tight" style="color:#142B4A">TradeSetu</span>
+                        <span class="block text-xs" style="color:#64748B">Supply chain workspace</span>
+                    </span>
+                </a>
+
+                <a href="{{ url_for('distributor_dashboard') }}" class="rounded-lg px-4 py-2 text-sm font-bold"
+                    style="background:#F1F5F9;color:#334155">
+                    ← <span class="hidden sm:inline">Dashboard</span>
                 </a>
             </div>
         </div>
-    </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <!-- Page heading -->
+        <section class="rounded-2xl p-6 sm:p-8 mb-7 text-white relative overflow-hidden"
+            style="background:linear-gradient(115deg,#142B4A 0%,#1E4775 75%,#2563EB 135%)">
+            <div class="relative" style="z-index:1">
+                <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#BFDBFE">Supply chain integrity
+                </p>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Shipment verification</h1>
+                <p class="mt-2 text-sm sm:text-base" style="color:#D7E6F8">
+                    Review shipment details and verify the received quantity.
+                </p>
+                <div class="mt-5">
+                    <span class="inline-flex rounded-lg px-3 py-2 text-sm font-bold"
+                        style="background:rgba(255,255,255,.13);color:white">
+                        {{ shipment.shipment_id }}
+                    </span>
+                </div>
+            </div>
+            <div class="absolute rounded-full"
+                style="width:230px;height:230px;border:1px solid rgba(255,255,255,.12);right:-50px;top:-90px"></div>
+            <div class="absolute rounded-full"
+                style="width:160px;height:160px;border:1px solid rgba(255,255,255,.12);right:-20px;top:-60px"></div>
+        </section>
+
+        <!-- Verification result -->
+        {% if verification_message %}
+        {% if verification_status == 'verified' %}
+        <section class="ts-result ts-result-verified mb-6" role="status" aria-live="polite">
+            <div class="flex items-start gap-3">
+                <span class="text-2xl" aria-hidden="true">✓</span>
+                <div>
+                    <h2 class="font-bold">Verification passed</h2>
+                    <p class="text-sm mt-1">{{ verification_message }}</p>
+                </div>
+            </div>
+        </section>
+        {% elif verification_status == 'tampered' %}
+        <section class="ts-result ts-result-tampered mb-6" role="alert">
+            <div class="flex items-start gap-3">
+                <span class="text-2xl" aria-hidden="true">!</span>
+                <div>
+                    <h2 class="font-bold">Integrity warning</h2>
+                    <p class="text-sm mt-1">{{ verification_message }}</p>
+                    <p class="text-xs mt-2">Do not treat this shipment as verified based on this result.</p>
+                </div>
+            </div>
+        </section>
+        {% else %}
+        <section class="ts-result ts-result-pending mb-6" role="status" aria-live="polite">
+            <div class="flex items-start gap-3">
+                <span class="text-2xl" aria-hidden="true">!</span>
+                <div>
+                    <h2 class="font-bold">Verification requires attention</h2>
+                    <p class="text-sm mt-1">{{ verification_message }}</p>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <!-- Shipment information -->
+            <section class="lg:col-span-2 ts-verify-card p-5 sm:p-7">
+                <div class="flex items-center justify-between gap-3 mb-6">
+                    <div>
+                        <p class="ts-verify-label">Shipment record</p>
+                        <h2 class="text-xl font-bold mt-1" style="color:#142B4A">Shipment details</h2>
+                    </div>
+                    <span class="ts-status">{{ shipment.status|replace('_', ' ') }}</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="rounded-xl p-4" style="background:#F8FAFC">
+                        <p class="ts-verify-label">Shipment ID</p>
+                        <p class="ts-verify-value">{{ shipment.shipment_id }}</p>
+                    </div>
+
+                    <div class="rounded-xl p-4" style="background:#F8FAFC">
+                        <p class="ts-verify-label">Product name</p>
+                        <p class="ts-verify-value">{{ shipment.product_name }}</p>
+                    </div>
+
+                    <div class="rounded-xl p-4" style="background:#F8FAFC">
+                        <p class="ts-verify-label">Product ID</p>
+                        <p class="ts-verify-value">{{ shipment.product_id }}</p>
+                    </div>
+
+                    <div class="rounded-xl p-4" style="background:#F8FAFC">
+                        <p class="ts-verify-label">Stored quantity</p>
+                        <p class="ts-verify-value">{{ shipment.quantity }} units</p>
+                    </div>
+
+                    <div class="rounded-xl p-4" style="background:#F8FAFC">
+                        <p class="ts-verify-label">Price per unit</p>
+                        <p class="ts-verify-value">{{ shipment.price_per_unit }}</p>
+                    </div>
+
+                    <div class="rounded-xl p-4" style="background:#F8FAFC">
+                        <p class="ts-verify-label">Total price</p>
+                        <p class="ts-verify-value">{{ shipment.total_price }}</p>
+                    </div>
+                </div>
+
+                {% if verification_message %}
+                <div class="mt-5 pt-5 border-t" style="border-color:#E5EAF1">
+                    <p class="ts-verify-label mb-2">Integrity check</p>
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-sm font-semibold">Shipment hash validation</span>
+                        {% if hash_valid %}
+                        <span class="text-sm font-bold" style="color:#15803D">✓ Valid</span>
+                        {% else %}
+                        <span class="text-sm font-bold" style="color:#B91C1C">✕ Invalid</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- Quantity verification -->
+            <aside class="space-y-5">
+                <section class="ts-verify-card p-5 sm:p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flex items-center justify-center rounded-xl"
+                            style="width:42px;height:42px;background:#DBEAFE;color:#1D4ED8">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.8" aria-hidden="true">
+                                <path
+                                    d="M8 4H5a1 1 0 0 0-1 1v3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
+                                <path d="m8 12 2.5 2.5L16 9" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="font-bold" style="color:#142B4A">Quantity check</h2>
+                            <p class="text-xs mt-1" style="color:#64748B">Confirm physical receipt</p>
+                        </div>
+                    </div>
+
+                    <p class="text-sm leading-6 mb-5" style="color:#64748B">
+                        Enter the number of units actually received. Compare it with the stored shipment quantity.
+                    </p>
+
+                    {% if hash_valid and not verification_message %}
+                    <form method="POST" class="space-y-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div>
+                            <label for="received_quantity" class="block text-sm font-semibold"
+                                style="color:#334155">Received quantity</label>
+                            <input id="received_quantity" type="number" name="received_quantity" class="ts-verify-input"
+                                required min="0" step="1" inputmode="numeric" placeholder="Enter units received">
+                            <p class="text-xs mt-2" style="color:#64748B">
+                                Expected: {{ shipment.quantity }} units
+                            </p>
+                        </div>
+
+                        <button type="submit" class="ts-verify-btn w-full">
+                            Verify quantity →
+                        </button>
+                    </form>
+                    {% elif verification_status == 'verified' %}
+                    <div class="rounded-lg p-3 text-sm font-semibold" style="background:#F0FDF4;color:#166534">
+                        ✓ Quantity verification completed.
+                    </div>
+                    {% elif verification_status == 'tampered' or (verification_message and not hash_valid) %}
+                    <div class="rounded-lg p-3 text-sm" style="background:#FEF2F2;color:#991B1B">
+                        Quantity submission is unavailable because integrity verification did not pass.
+                    </div>
+                    {% else %}
+                    <div class="rounded-lg p-3 text-sm" style="background:#F1F5F9;color:#475569">
+                        Quantity verification is not currently available.
+                    </div>
+                    {% endif %}
+                </section>
+
+                <section class="rounded-xl p-5" style="background:#EFF6FF;border:1px solid #DBEAFE">
+                    <p class="text-sm font-bold" style="color:#1E40AF">Verification reminder</p>
+                    <p class="text-xs leading-5 mt-2" style="color:#1D4ED8">
+                        A matching quantity alone does not prove shipment integrity. Review the verification result and
+                        report discrepancies through the appropriate workflow.
+                    </p>
+                </section>
+            </aside>
+        </div>
+
+        <div class="mt-7 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-xs text-center sm:text-left" style="color:#64748B">
+                TradeSetu · Shipment integrity and logistics visibility
+            </p>
+            <a href="{{ url_for('distributor_dashboard') }}" class="rounded-lg px-5 py-3 text-sm font-bold"
+                style="background:#E2E8F0;color:#334155">
+                ← Back to distributor dashboard
+            </a>
+        </div>
+
+        <footer class="mt-8 pt-6 border-t text-center text-xs" style="border-color:#E2E8F0;color:#64748B">
+            <p>Created by Krish Gupta and Atharva Jagtap · MIT ADT University · © 2026</p>
+        </footer>
+    </main>
 </div>
 {% endblock %}

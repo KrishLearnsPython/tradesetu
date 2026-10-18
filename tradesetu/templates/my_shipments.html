@@ -1,142 +1,560 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Navbar -->
-    <nav class="bg-white shadow-lg">
+{% set total_shipments = shipments|length %}
+{% set delivered_count = shipments|selectattr('status', 'equalto', 'DELIVERED')|list|length %}
+{% set transit_count = shipments|selectattr('status', 'equalto', 'IN_TRANSIT')|list|length %}
+{% set assignment_count = shipments|rejectattr('distributor_pan')|list|length %}
+
+<style>
+    .ts-shell {
+        min-height: 100vh;
+        background: #F5F7FA;
+        color: #172B4D;
+    }
+
+    .ts-brand {
+        color: #142B4A;
+    }
+
+    .ts-muted {
+        color: #64748B;
+    }
+
+    .ts-card {
+        background: #fff;
+        border: 1px solid #E5EAF1;
+        border-radius: 16px;
+        box-shadow: 0 3px 12px rgba(15, 23, 42, .035);
+    }
+
+    .ts-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .09em;
+        text-transform: uppercase;
+        color: #64748B;
+    }
+
+    .ts-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 9px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        transition: background .15s;
+    }
+
+    .ts-btn-primary {
+        background: #2563EB;
+        color: white;
+    }
+
+    .ts-btn-primary:hover {
+        background: #1D4ED8;
+    }
+
+    .ts-btn-secondary {
+        background: #F1F5F9;
+        color: #334155;
+    }
+
+    .ts-btn-secondary:hover {
+        background: #E2E8F0;
+    }
+
+    .ts-input {
+        width: 100%;
+        border: 1px solid #CBD5E1;
+        border-radius: 9px;
+        padding: 10px 12px;
+        background: white;
+        color: #142B4A;
+        font-size: 13px;
+    }
+
+    .ts-input:focus {
+        outline: none;
+        border-color: #2563EB;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .ts-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 11px;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+    .ts-status:before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .ts-status-CREATED {
+        background: #DBEAFE;
+        color: #1D4ED8;
+    }
+
+    .ts-status-ASSIGNED {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+    .ts-status-IN_TRANSIT {
+        background: #EDE9FE;
+        color: #6D28D9;
+    }
+
+    .ts-status-AT_STORAGE {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+
+    .ts-status-OUT_FOR_DELIVERY {
+        background: #EDE9FE;
+        color: #6D28D9;
+    }
+
+    .ts-status-DELIVERED {
+        background: #D1FAE5;
+        color: #047857;
+    }
+
+    .ts-status-TAMPERED {
+        background: #FEE2E2;
+        color: #B91C1C;
+    }
+
+    .ts-qr {
+        width: 104px;
+        height: 104px;
+        object-fit: contain;
+        background: white;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 5px;
+        cursor: zoom-in;
+    }
+
+    .ts-qr:hover {
+        border-color: #93C5FD;
+    }
+</style>
+
+<div class="ts-shell">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/" class="text-xl font-bold text-brand-blue hover:text-brand-blue-hover">TradeSetu</a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/dashboard" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Back to Dashboard</a>
-                    <form action="{{ url_for('logout') }}" method="POST" class="inline">
+            <div class="flex items-center justify-between gap-4" style="min-height:72px">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                    <span class="flex items-center justify-center rounded-xl text-white font-bold text-lg"
+                        style="width:40px;height:40px;background:#142B4A">T</span>
+                    <span>
+                        <span class="block text-xl font-extrabold tracking-tight ts-brand">TradeSetu</span>
+                        <span class="block text-xs ts-muted">Supply chain workspace</span>
+                    </span>
+                </a>
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <a href="{{ url_for('dashboard') }}" class="ts-btn ts-btn-secondary">← <span
+                            class="hidden sm:inline">Dashboard</span></a>
+                    <form action="{{ url_for('logout') }}" method="POST">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</button>
+                        <button type="submit" class="text-sm font-semibold text-gray-600 hover:text-red-600">Logout
+                            ↗</button>
                     </form>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div class="px-4 py-6 sm:px-0">
-            <h1 class="text-3xl font-bold text-gray-900 mb-8">My Shipments</h1>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="mb-6 space-y-2" aria-live="polite">
+            {% for message in messages %}
+            <div class="ts-card px-4 py-3 text-sm" style="border-left:4px solid #2563EB">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
 
-            <div class="bg-white shadow overflow-hidden sm:rounded-md">
-                {% if shipments %}
-                <ul class="divide-y divide-gray-200">
-                    {% for shipment in shipments %}
-                    <li class="px-6 py-4">
-                        <div class="grid grid-cols-1 md:grid-cols-7 gap-4 items-center">
+        <!-- Header -->
+        <section class="rounded-2xl p-6 sm:p-8 mb-7 text-white relative overflow-hidden"
+            style="background:linear-gradient(115deg,#142B4A 0%,#1E4775 75%,#2563EB 135%)">
+            <div class="relative" style="z-index:1">
+                <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#BFDBFE">Shipment management
+                </p>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">My Shipments</h1>
+                <p class="mt-2 text-sm sm:text-base" style="color:#D7E6F8">Track product movement, assign distributors,
+                    and inspect shipment QR codes.</p>
+                <div class="mt-6">
+                    <a href="{{ url_for('create_shipment') }}" class="ts-btn" style="background:white;color:#142B4A">＋
+                        Create shipment</a>
+                </div>
+            </div>
+            <div class="absolute rounded-full"
+                style="width:230px;height:230px;border:1px solid rgba(255,255,255,.12);right:-50px;top:-90px"></div>
+            <div class="absolute rounded-full"
+                style="width:170px;height:170px;border:1px solid rgba(255,255,255,.12);right:-20px;top:-60px"></div>
+        </section>
+
+        <!-- Summary -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+            <div class="ts-card p-5">
+                <p class="ts-label">Total shipments</p>
+                <p class="text-3xl font-bold mt-4 ts-brand">{{ total_shipments }}</p>
+                <p class="text-xs ts-muted mt-1">Your shipment records</p>
+            </div>
+            <div class="ts-card p-5">
+                <p class="ts-label">In transit</p>
+                <p class="text-3xl font-bold mt-4 ts-brand">{{ transit_count }}</p>
+                <p class="text-xs ts-muted mt-1">Currently moving</p>
+            </div>
+            <div class="ts-card p-5">
+                <p class="ts-label">Awaiting assignment</p>
+                <p class="text-3xl font-bold mt-4 ts-brand">{{ assignment_count }}</p>
+                <p class="text-xs ts-muted mt-1">Without a distributor PAN</p>
+            </div>
+            <div class="ts-card p-5">
+                <p class="ts-label">Delivered</p>
+                <p class="text-3xl font-bold mt-4 ts-brand">{{ delivered_count }}</p>
+                <p class="text-xs ts-muted mt-1">Completed shipments</p>
+            </div>
+        </section>
+
+        <!-- Shipment list -->
+        <section class="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <p class="ts-label mb-2">Logistics overview</p>
+                <h2 class="text-xl sm:text-2xl font-bold ts-brand">Shipment records</h2>
+                <p class="text-sm ts-muted mt-1">View shipment details and manage distributor assignments.</p>
+            </div>
+            <span class="text-sm ts-muted">{{ total_shipments }} record{% if total_shipments != 1 %}s{% endif %}</span>
+        </section>
+
+        {% if shipments %}
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            {% for shipment in shipments %}
+            <article class="ts-card overflow-hidden">
+                <div class="p-5 sm:p-6">
+                    <div class="flex flex-wrap justify-between items-start gap-3">
+                        <div class="min-w-0">
+                            <p class="ts-label">Shipment reference</p>
+                            <h3 class="text-lg font-bold ts-brand mt-1 break-all">{{ shipment.shipment_id }}</h3>
+                            <p class="text-sm ts-muted mt-1 break-words">{{ shipment.product_name }}</p>
+                        </div>
+                        <span class="ts-status ts-status-{{ shipment.status }}">{{ shipment.status|replace('_', ' ')
+                            }}</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+                        <div class="rounded-xl p-3" style="background:#F8FAFC">
+                            <p class="ts-label">Quantity</p>
+                            <p class="text-lg font-bold ts-brand mt-1">{{ shipment.quantity }} <span
+                                    class="text-xs font-normal ts-muted">units</span></p>
+                        </div>
+
+                    </div>
+
+                    {% if shipment.city or shipment.state or shipment.pincode %}
+                    <div class="mt-5 pt-4 border-t" style="border-color:#E5EAF1">
+                        <p class="ts-label mb-2">Delivery destination</p>
+                        <p class="text-sm font-semibold ts-brand">⌖ {{ shipment.city }}{% if shipment.city and
+                            shipment.state %}, {% endif %}{{ shipment.state }}{% if shipment.pincode %} — {{
+                            shipment.pincode }}{% endif %}</p>
+                        {% if shipment.delivery_address %}
+                        <p class="text-sm ts-muted mt-1 break-words">{{ shipment.delivery_address }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-5 pt-5 border-t" style="border-color:#E5EAF1">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                             <div>
-                                <div class="text-sm font-medium text-gray-900">Shipment ID</div>
-                                <div class="text-sm text-gray-500">{{ shipment.shipment_id }}</div>
-                            </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-900">Product Name</div>
-                                <div class="text-sm text-gray-500">{{ shipment.product_name }}</div>
-                            </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-900">Quantity</div>
-                                <div class="text-sm text-gray-500">{{ shipment.quantity }}</div>
-                            </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-900">Status</div>
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    {% if shipment.status == 'CREATED' %}bg-blue-100 text-blue-800{% endif %}
-                                    {% if shipment.status == 'ASSIGNED' %}bg-yellow-100 text-yellow-800{% endif %}
-                                    {% if shipment.status == 'IN_TRANSIT' %}bg-purple-100 text-purple-800{% endif %}
-                                    {% if shipment.status == 'DELIVERED' %}bg-green-100 text-green-800{% endif %}
-                                    {% if shipment.status == 'TAMPERED' %}bg-red-100 text-red-800{% endif %}">
-                                    {{ shipment.status }}
-                                </span>
-                            </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-900">Distributor</div>
+                                <p class="text-sm font-bold ts-brand">Distributor assignment</p>
                                 {% if shipment.distributor_pan %}
-                                <div class="text-sm text-gray-500">{{ shipment.distributor_pan }}</div>
+                                <p class="text-xs ts-muted mt-1">Assigned · PAN {{ shipment.distributor_pan }}</p>
                                 {% else %}
-                                <form method="POST" class="mt-2">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <input type="hidden" name="shipment_id" value="{{ shipment.shipment_id }}">
-                                    <select name="distributor_id" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                        <option value="">Select Distributor</option>
-                                        {% for d in distributors %}
-                                        <option value="{{ d.id }}">{{ d.business_name }} (PAN: {{ d.pan_tan_id }})</option>
-                                        {% endfor %}
-                                    </select>
-                                    <button type="submit" class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium">
-                                        Assign
-                                    </button>
-                                </form>
+                                <p class="text-xs ts-muted mt-1">Select a distributor to continue.</p>
                                 {% endif %}
                             </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-900">Hash</div>
-                                <div class="text-xs text-gray-500 font-mono">{{ shipment.current_hash[:16] }}...</div>
-                            </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-900">QR Code</div>
-                                <img src="/static/qr_codes/{{ shipment.shipment_id }}.png" 
-                                     alt="QR Code" 
-                                     class="w-16 h-16 object-contain cursor-pointer hover:scale-110 transition duration-200 rounded border"
-                                     onclick="openQRModal(this.src)">
-                                <p class="text-xs text-gray-500 text-center mt-1">Click to enlarge</p>
-                            </div>
                         </div>
-                        {% if shipment.city or shipment.state or shipment.pincode %}
-                        <div class="mt-3 pt-3 border-t border-gray-200 text-sm">
-                            <span class="text-gray-600"><strong>📍 Destination:</strong> {{ shipment.city }}, {{ shipment.state }} - {{ shipment.pincode }}</span>
-                            {% if shipment.delivery_address %}<div class="text-xs text-gray-500 mt-1">{{ shipment.delivery_address }}</div>{% endif %}
+
+                        {% if shipment.distributor_pan %}
+                        <div class="rounded-lg px-3 py-2 text-sm" style="background:#F0FDF4;color:#166534">
+                            ✓ Distributor assigned
                         </div>
+                        {% else %}
+                        <form method="POST" class="space-y-3">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="shipment_id" value="{{ shipment.shipment_id }}">
+                            <label class="block text-xs font-semibold ts-muted"
+                                for="distributor-{{ loop.index }}">Choose distributor</label>
+                            <div class="relative">
+                                <select id="distributor-{{ loop.index }}" name="distributor_id" required
+                                    class="ts-input"
+                                    style="-webkit-appearance:none;appearance:none;padding-right:38px;background-image:none">
+                                    <option value="">Select a distributor</option>
+                                    {% for d in distributors %}
+                                    <option value="{{ d.id }}">{{ d.business_name }} (PAN: {{ d.pan_tan_id }})</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3"
+                                    style="color:#64748B">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" aria-hidden="true">
+                                        <path d="m7 10 5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </span>
+                            </div>
+                            <button type="submit" class="ts-btn ts-btn-primary w-full">Assign distributor →</button>
+                            {% if not distributors %}
+                            <p class="text-xs rounded-lg p-3" style="background:#FFF7ED;color:#9A3412">No distributors
+                                are currently available.</p>
+                            {% endif %}
+                        </form>
                         {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="px-6 py-4 text-center text-gray-500">
-                    No shipments found. <a href="/create_shipment" class="text-brand-blue hover:text-brand-blue-hover">Create your first shipment</a>.
+                    </div>
+
+                    <div class="mt-5 pt-5 border-t" style="border-color:#E5EAF1">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <p class="text-sm font-bold ts-brand">Shipment QR code</p>
+                                <p class="text-xs ts-muted mt-1">Open a larger view to scan or inspect.</p>
+                            </div>
+                            <img src="{{ url_for('static', filename='qr_codes/' ~ shipment.shipment_id ~ '.png') }}"
+                                alt="Shipment QR Code" class="ts-qr cursor-pointer"
+                                data-shipment-id="{{ shipment.shipment_id }}" role="button" tabindex="0"
+                                title="Click to enlarge QR code">
+                        </div>
+
+                    </div>
                 </div>
-                {% endif %}
-            </div>
-        </div>
+            </article>
+            {% endfor %}
+        </section>
+        {% else %}
+        <section class="ts-card text-center px-6 py-14">
+            <div class="mx-auto flex items-center justify-center rounded-2xl text-blue-700 text-2xl"
+                style="width:64px;height:64px;background:#DBEAFE">▤</div>
+            <h3 class="text-lg font-bold ts-brand mt-5">No shipments yet</h3>
+            <p class="text-sm ts-muted mt-2 max-w-md mx-auto">Create your first shipment to start tracking products
+                through your supply chain.</p>
+            <a href="{{ url_for('create_shipment') }}" class="ts-btn ts-btn-primary mt-5">＋ Create your first
+                shipment</a>
+        </section>
+        {% endif %}
+
+        <footer class="mt-10 pt-6 border-t text-center text-xs ts-muted" style="border-color:#E2E8F0">
+            <p>TradeSetu · Trusted supply chain visibility for Indian MSMEs</p>
+            <p class="mt-1">Created by Krish Gupta and Atharva Jagtap</p>
+        </footer>
     </main>
 </div>
 
-<!-- Fullscreen QR Modal -->
-<div id="qrModal" class="fixed inset-0 bg-black bg-opacity-90 hidden flex items-center justify-center z-50">
-    <img id="qrImage" class="max-w-full max-h-full rounded-lg shadow-2xl">
-    <button onclick="closeQRModal()" 
-        class="absolute top-5 right-5 text-white text-4xl font-bold hover:text-gray-300 transition duration-200">
-        ✕
-    </button>
+
+
+<!-- QR Preview Modal -->
+<div id="qrModal" class="hidden fixed inset-0 items-center justify-center p-4"
+    style="z-index:1000;background:rgba(15,23,42,.85)" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+
+    <div class="bg-white rounded-2xl p-5 sm:p-7 w-full max-w-lg" style="box-shadow:0 25px 70px rgba(0,0,0,.3)">
+
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-widest text-blue-600">Shipment identification</p>
+                <h2 id="qrModalTitle" class="text-xl font-bold mt-1" style="color:#142B4A">
+                    Shipment QR Code
+                </h2>
+                <p id="qrShipmentLabel" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+
+            <button type="button" onclick="closeQRModal()" class="text-gray-500 hover:text-gray-900 text-3xl"
+                aria-label="Close QR preview">&times;</button>
+        </div>
+
+        <!-- QR image -->
+        <div class="my-6 rounded-xl p-4 flex items-center justify-center"
+            style="min-height:340px;background:#F8FAFC;border:1px solid #E5EAF1">
+
+            <div class="text-center">
+                <img id="qrImage" alt="Shipment QR code"
+                    style="display:none;width:320px;height:320px;max-width:100%;object-fit:contain;image-rendering:pixelated"
+                    onload="this.style.display='block';document.getElementById('qrLoading').style.display='none';document.getElementById('qrError').style.display='none';"
+                    onerror="this.style.display='none';document.getElementById('qrLoading').style.display='none';document.getElementById('qrError').style.display='block';">
+
+                <p id="qrLoading" class="text-sm text-gray-500">Loading QR code…</p>
+
+                <div id="qrError" style="display:none" class="text-sm text-red-600">
+                    The QR image could not be loaded. Please check that the image exists.
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button type="button" onclick="downloadQR()" class="rounded-lg py-3 px-4 font-semibold text-white"
+                style="background:#2563EB">
+                ↓ Save QR as PNG
+            </button>
+
+            <button type="button" onclick="printQR()" class="rounded-lg py-3 px-4 font-semibold"
+                style="background:#E2E8F0;color:#142B4A">
+                Print QR Code
+            </button>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-4 text-center">
+            Save the image to your device or print it for shipment identification.
+        </p>
+    </div>
 </div>
 
 <script>
-    function openQRModal(src) {
-        document.getElementById('qrModal').classList.remove('hidden');
-        document.getElementById('qrImage').src = src;
+    let activeQRShipmentId = '';
+
+    function openQRModal(src, shipmentId) {
+        const modal = document.getElementById('qrModal');
+        const image = document.getElementById('qrImage');
+
+        activeQRShipmentId = shipmentId || 'shipment';
+
+        document.getElementById('qrShipmentLabel').textContent =
+            'Shipment ID: ' + activeQRShipmentId;
+
+        image.style.display = 'none';
+        document.getElementById('qrError').style.display = 'none';
+        document.getElementById('qrLoading').style.display = 'block';
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Reload the selected shipment's actual QR image.
+        image.src = src;
     }
 
     function closeQRModal() {
-        document.getElementById('qrModal').classList.add('hidden');
+        const modal = document.getElementById('qrModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
 
-    // Close modal when clicking on background
-    document.getElementById('qrModal').addEventListener('click', function(e) {
-        if (e.target.id === 'qrModal') {
-            closeQRModal();
+    function downloadQR() {
+        const image = document.getElementById('qrImage');
+
+        if (!image.complete || image.naturalWidth === 0) {
+            alert('The QR image is not loaded yet. Please wait and try again.');
+            return;
         }
+
+        const link = document.createElement('a');
+        link.href = image.src;
+        link.download = 'TradeSetu-' + activeQRShipmentId + '.png';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    function printQR() {
+        const image = document.getElementById('qrImage');
+
+        if (!image.complete || image.naturalWidth === 0) {
+            alert('The QR image is not loaded yet. Please wait and try again.');
+            return;
+        }
+
+        // Open the print window directly from the user's button click.
+        const printWindow = window.open('', '_blank');
+
+        if (!printWindow) {
+            alert('Safari blocked the print window. Allow pop-ups for this site and try again.');
+            return;
+        }
+
+        const safeTitle = 'TradeSetu ' + activeQRShipmentId;
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${safeTitle}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        padding: 24px;
+                    }
+                    img {
+                        width: 320px;
+                        height: 320px;
+                        object-fit: contain;
+                        image-rendering: pixelated;
+                    }
+                    @media print {
+                        button { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h2>${safeTitle}</h2>
+                <img id="printQR" src="${image.src}" alt="Shipment QR code">
+                <p>Scan to identify this shipment.</p>
+                <script>
+                    const qr = document.getElementById('printQR');
+                    qr.onload = () => {
+                        window.focus();
+                        window.print();
+                    };
+                    qr.onerror = () => {
+                        document.body.innerHTML = 'Unable to load the QR image for printing.';
+                    };
+                    if (qr.complete && qr.naturalWidth > 0) {
+                        window.focus();
+                        window.print();
+                    }
+                <\/script>
+            </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') closeQRModal();
     });
 
-    // Close modal on Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeQRModal();
-        }
+
+    document.getElementById('qrModal').addEventListener('click', function (event) {
+        if (event.target === this) closeQRModal();
     });
+
+    // Connect every shipment QR image to the popup.
+    document.querySelectorAll('.ts-qr').forEach(function (img) {
+        img.addEventListener('click', function () {
+            openQRModal(this.src, this.dataset.shipmentId);
+        });
+
+        img.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openQRModal(this.src, this.dataset.shipmentId);
+            }
+        });
+    });
+
 </script>
+
+
 {% endblock %}

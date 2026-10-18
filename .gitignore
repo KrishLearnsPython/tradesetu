@@ -15,3 +15,6 @@ __pycache__/
 
 # Generated QR codes
 tradesetu/static/qr_codes/*.png
+
+# Local template backups
+*.backup

@@ -1,165 +1,424 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Header Navigation -->
-<nav class="bg-white shadow-md border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <a href="/" class="text-2xl font-bold text-blue-600">TradeSetu</a>
-            <div class="flex gap-6 items-center">
-                <a href="/storage_dashboard"
-                    class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium">
-                    Dashboard
-                </a>
-                <form action="{{ url_for('logout') }}" method="POST" class="inline">
+<main class="min-h-screen bg-[#F5F7FA] text-slate-900">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
+        <div class="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
+            <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#142B4A] text-white">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+                        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                            stroke-linejoin="round" />
+                        <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span>
+                    <span class="block text-lg font-extrabold tracking-tight text-[#142B4A]">TradeSetu</span>
+                    <span
+                        class="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 sm:block">Supply
+                        chain visibility</span>
+                </span>
+            </a>
+
+            <div class="flex items-center gap-3">
+                <div class="hidden text-right sm:block">
+                    <p class="max-w-40 truncate text-sm font-semibold text-slate-800">{{ session.get('business_name',
+                        'Your Business') }}</p>
+                    <p class="text-xs text-slate-500">Storage workspace</p>
+                </div>
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800"
+                    aria-hidden="true">
+                    {{ (session.get('business_name', 'S') or 'S')[:1]|upper }}
+                </div>
+                <form action="{{ url_for('logout') }}" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="text-red-600 hover:text-red-700 transition duration-200 font-medium">
-                        Logout
+                    <button type="submit"
+                        class="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                        Sign out
                     </button>
                 </form>
-
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Page Title Section -->
-        <div class="mb-8">
-            <h2 class="text-3xl font-bold text-gray-900">Storage Dashboard</h2>
-            <p class="text-gray-600 mt-2">Welcome {{ session['business_name'] }}</p>
-            <p class="text-gray-500 mt-1">Manage shipments assigned to your storage facility</p>
-        </div>
+    <div class="mx-auto max-w-7xl px-5 py-9 sm:px-8 sm:py-12">
 
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            {% with messages = get_flashed_messages() %}
-            {% if messages %}
+        <!-- Welcome banner -->
+        <section
+            class="relative overflow-hidden rounded-3xl bg-[#142B4A] px-6 py-8 text-white shadow-sm sm:px-10 sm:py-10">
+            <div class="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl"
+                aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -right-8 top-8 h-48 w-48 rounded-full border border-white/10"
+                aria-hidden="true"></div>
+
+            <div class="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div class="max-w-2xl">
+                    <span
+                        class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-100">
+                        <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                        Storage facility workspace
+                    </span>
+                    <h1 class="mt-5 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                        Welcome back, {{ session.get('business_name', 'Storage team') }}.
+                    </h1>
+                    <p class="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+                        Verify incoming consignments, record quantities received, and dispatch stored shipments for
+                        delivery.
+                    </p>
+                </div>
+
+                <div class="shrink-0 rounded-2xl border border-white/15 bg-white/10 p-5 sm:min-w-48">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-blue-200">Your workspace</p>
+                    <p class="mt-2 text-3xl font-extrabold">{{ shipments|length }}</p>
+                    <p class="mt-1 text-sm text-slate-300">Assigned shipment{{ 's' if shipments|length != 1 else '' }}
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="mt-6 space-y-3" role="status" aria-live="polite">
             {% for message in messages %}
-            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+            <div class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
                 {{ message }}
             </div>
             {% endfor %}
-            {% endif %}
-            {% endwith %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Overview -->
+        <section class="mb-6 mt-10">
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Overview</p>
+            <h2 class="mt-2 text-2xl font-extrabold tracking-tight text-[#142B4A]">Storage operations</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+                Monitor shipment progress and manage receiving and last-mile dispatch from your facility.
+            </p>
+        </section>
+
+        <!-- Summary cards -->
+        <section class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-slate-500">Assigned shipments</span>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                                stroke-linejoin="round" />
+                            <path d="m3.5 7.7 8.5 4.6 8.5-4.6M12 21v-8.7" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-4 text-3xl font-extrabold text-[#142B4A]">{{ shipments|length }}</p>
+                <p class="mt-1 text-xs text-slate-500">Available in this workspace</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-slate-500">Awaiting receipt</span>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+                            <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-4 text-3xl font-extrabold text-[#142B4A]">{{ shipments|selectattr('status', 'equalto',
+                    'IN_TRANSIT')|list|length }}</p>
+                <p class="mt-1 text-xs text-slate-500">In transit to storage</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-slate-500">At storage</span>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="M3 10 12 4l9 6v10H3V10Z" stroke="currentColor" stroke-width="1.7"
+                                stroke-linejoin="round" />
+                            <path d="M9 20v-6h6v6M3 10h18" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-4 text-3xl font-extrabold text-[#142B4A]">{{ shipments|selectattr('status', 'equalto',
+                    'AT_STORAGE')|list|length }}</p>
+                <p class="mt-1 text-xs text-slate-500">Ready for dispatch</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-slate-500">Out for delivery</span>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z" stroke="currentColor" stroke-width="1.7"
+                                stroke-linejoin="round" />
+                            <circle cx="7" cy="18" r="1.8" stroke="currentColor" stroke-width="1.7" />
+                            <circle cx="18" cy="18" r="1.8" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-4 text-3xl font-extrabold text-[#142B4A]">{{ shipments|selectattr('status', 'equalto',
+                    'OUT_FOR_DELIVERY')|list|length }}</p>
+                <p class="mt-1 text-xs text-slate-500">Last-mile delivery underway</p>
+            </div>
+        </section>
+
+        <!-- Shipment cards -->
+        <section>
+            <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-[#142B4A]">Your shipments</h2>
+                    <p class="mt-1 text-sm text-slate-500">Verify incoming shipments or dispatch stored consignments.
+                    </p>
+                </div>
+                <span
+                    class="inline-flex w-fit items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600">
+                    {{ shipments|length }} total
+                </span>
+            </div>
 
             {% if shipments %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border border-gray-300 rounded-lg">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Shipment ID</th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Product Name</th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Status</th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Transport Details</th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                                Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        {% for s in shipments %}
-                        <tr class="hover:bg-gray-50 transition duration-200">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.shipment_id
-                                }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ s.product_name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                        {% if s.status == 'CREATED' %}bg-gray-100 text-gray-800
-                                        {% elif s.status == 'ASSIGNED' %}bg-yellow-100 text-yellow-800
-                                        {% elif s.status == 'IN_TRANSIT' %}bg-blue-100 text-blue-800
-                                        {% elif s.status == 'AT_STORAGE' %}bg-green-100 text-green-800
-                                        {% elif s.status == 'OUT_FOR_DELIVERY' %}bg-purple-100 text-purple-800
-                                        {% elif s.status == 'DELIVERED' %}bg-green-100 text-green-800
-                                        {% elif s.status == 'TAMPERED' %}bg-red-100 text-red-800
-                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    {{ s.status }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {% if s.transporter_name %}
-                                {{ s.transporter_name }} | {{ s.vehicle_number }}<br>
-                                {{ s.driver_name }} | {{ s.driver_phone }}
-                                {% else %}
-                                <span class="text-gray-400">Not assigned</span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {% if s.status == 'IN_TRANSIT' %}
-                                <button onclick="startScan('{{ s.shipment_id }}')"
-                                    class="bg-blue-600 text-white px-3 py-2 rounded mr-2">Scan & Verify</button>
-                                <input type="number" id="qty_{{ s.shipment_id }}" disabled
-                                    class="border px-2 py-1 rounded bg-gray-200 mr-2"
-                                    placeholder="Enter received quantity">
-                                <button onclick="confirmReceive('{{ s.shipment_id }}')" id="confirm_{{ s.shipment_id }}"
-                                    disabled class="bg-green-600 text-white px-3 py-2 rounded">Confirm Receive</button>
+            <div class="grid gap-5 xl:grid-cols-2">
+                {% for s in shipments %}
+                <article
+                    class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:border-blue-200 hover:shadow-md">
+                    <div class="border-b border-slate-100 p-5 sm:p-6">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Shipment reference
+                                </p>
+                                <h3 class="mt-1 break-all font-mono text-lg font-extrabold text-blue-700">{{
+                                    s.shipment_id }}</h3>
+                                <p class="mt-2 break-words text-base font-bold text-[#142B4A]">{{ s.product_name }}</p>
+                            </div>
+
+                            <div class="shrink-0">
+                                {% if s.status == 'CREATED' %}
+                                <span
+                                    class="inline-flex rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700">Created</span>
+                                {% elif s.status == 'ASSIGNED' %}
+                                <span
+                                    class="inline-flex rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800">Assigned</span>
+                                {% elif s.status == 'IN_TRANSIT' %}
+                                <span
+                                    class="inline-flex rounded-full bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-800">In
+                                    transit</span>
                                 {% elif s.status == 'AT_STORAGE' %}
-                                <button onclick="openDeliveryForm('{{ s.shipment_id }}')"
-                                    class="bg-orange-600 text-white px-3 py-2 rounded">Dispatch for Delivery</button>
+                                <span
+                                    class="inline-flex rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">At
+                                    storage</span>
+                                {% elif s.status == 'OUT_FOR_DELIVERY' %}
+                                <span
+                                    class="inline-flex rounded-full bg-violet-100 px-3 py-1.5 text-xs font-bold text-violet-800">Out
+                                    for delivery</span>
+                                {% elif s.status == 'DELIVERED' %}
+                                <span
+                                    class="inline-flex rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">Delivered</span>
+                                {% elif s.status == 'TAMPERED' %}
+                                <span
+                                    class="inline-flex rounded-full bg-red-100 px-3 py-1.5 text-xs font-bold text-red-800">Tampered</span>
                                 {% else %}
-                                <span class="text-gray-400">N/A</span>
+                                <span
+                                    class="inline-flex rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700">{{
+                                    s.status }}</span>
                                 {% endif %}
-                            </td>
-                        </tr>
-                        {% if s.city or s.state or s.pincode %}
-                        <tr class="bg-gray-50">
-                            <td colspan="5" class="px-6 py-2 text-sm text-gray-600">
-                                <div><strong>📍 Delivery Location:</strong> {{ s.city }}, {{ s.state }} - {{ s.pincode
-                                    }}</div>
-                                {% if s.delivery_address %}<div class="text-xs text-gray-500 mt-1">{{ s.delivery_address
-                                    }}</div>{% endif %}
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
+
+                        {% if s.city or s.state or s.pincode or s.delivery_address %}
+                        <div class="mt-5 rounded-xl bg-slate-50 p-4">
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Delivery destination
+                            </p>
+                            <p class="mt-2 text-sm font-semibold text-slate-800">
+                                {{ s.city or '' }}{% if s.city and s.state %}, {% endif %}{{ s.state or '' }}{% if
+                                s.pincode %} - {{ s.pincode }}{% endif %}
+                            </p>
+                            {% if s.delivery_address %}
+                            <p class="mt-1 break-words text-sm leading-6 text-slate-500">{{ s.delivery_address }}</p>
+                            {% endif %}
+                        </div>
                         {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    </div>
+
+                    <div class="p-5 sm:p-6">
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Transporter</p>
+                                {% if s.transporter_name %}
+                                <p class="mt-2 break-words text-sm font-semibold text-slate-800">{{ s.transporter_name
+                                    }}</p>
+                                <p class="mt-1 text-xs text-slate-500">{{ s.vehicle_number or 'Vehicle not provided' }}
+                                </p>
+                                {% else %}
+                                <p class="mt-2 text-sm text-slate-400">Transport not assigned</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Driver details</p>
+                                {% if s.driver_name or s.driver_phone %}
+                                <p class="mt-2 break-words text-sm font-semibold text-slate-800">{{ s.driver_name or
+                                    'Name not provided' }}</p>
+                                <p class="mt-1 break-words text-xs text-slate-500">{{ s.driver_phone or 'Phone not
+                                    provided' }}</p>
+                                {% else %}
+                                <p class="mt-2 text-sm text-slate-400">No driver details</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if s.status == 'IN_TRANSIT' %}
+                        <div class="mt-6 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                            <p class="text-sm font-bold text-[#142B4A]">Receive shipment</p>
+                            <p class="mt-1 text-xs leading-5 text-slate-500">Scan the QR code and verify integrity
+                                before recording the received quantity.</p>
+                            <button type="button" onclick="startScan('{{ s.shipment_id }}')"
+                                class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#142B4A] px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-900">
+                                <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" aria-hidden="true">
+                                    <path
+                                        d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"
+                                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                    <path d="M8 8h3v3H8zM14 8h2M14 11h2M8 14h3v3H8zM14 14h3v3h-3z" stroke="currentColor"
+                                        stroke-width="1.5" stroke-linejoin="round" />
+                                </svg>
+                                Scan &amp; verify QR
+                            </button>
+
+                            <div class="mt-4">
+                                <label for="qty_{{ s.shipment_id }}"
+                                    class="mb-2 block text-sm font-semibold text-slate-700">Actual quantity
+                                    received</label>
+                                <input type="number" id="qty_{{ s.shipment_id }}" min="0" step="1" disabled
+                                    placeholder="Enter received quantity"
+                                    class="w-full rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed">
+                            </div>
+
+                            <button type="button" onclick="confirmReceive('{{ s.shipment_id }}')"
+                                id="confirm_{{ s.shipment_id }}" disabled
+                                class="mt-3 w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500">
+                                Confirm received quantity
+                            </button>
+                        </div>
+                        {% elif s.status == 'AT_STORAGE' %}
+                        <div class="mt-6 rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+                            <p class="text-sm font-bold text-emerald-900">Ready for dispatch</p>
+                            <p class="mt-1 text-xs leading-5 text-slate-600">Add the delivery person's details before
+                                sending this shipment out.</p>
+                            <button type="button" onclick="openDeliveryForm('{{ s.shipment_id }}')"
+                                class="mt-4 w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-800">
+                                Dispatch for delivery
+                            </button>
+                        </div>
+                        {% elif s.status == 'OUT_FOR_DELIVERY' %}
+                        <div class="mt-6 rounded-xl border border-violet-100 bg-violet-50 p-4">
+                            <p class="text-sm font-bold text-violet-900">Last-mile delivery in progress</p>
+                            <p class="mt-1 text-xs leading-5 text-slate-600">This shipment has been dispatched from
+                                storage.</p>
+                        </div>
+                        {% elif s.status == 'DELIVERED' %}
+                        <div class="mt-6 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                            <p class="text-sm font-bold text-emerald-900">Delivery completed</p>
+                            <p class="mt-1 text-xs leading-5 text-slate-600">This shipment is marked as delivered.</p>
+                        </div>
+                        {% elif s.status == 'TAMPERED' %}
+                        <div class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+                            <p class="text-sm font-bold text-red-900">Integrity warning</p>
+                            <p class="mt-1 text-xs leading-5 text-red-800">Do not process this shipment until the
+                                integrity issue has been investigated.</p>
+                        </div>
+                        {% else %}
+                        <div class="mt-6 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-sm font-semibold text-slate-700">No storage action available</p>
+                            <p class="mt-1 text-xs text-slate-500">Available actions depend on the shipment's current
+                                status.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
             </div>
             {% else %}
-            <div class="text-center py-12">
-                <p class="text-gray-500 text-lg">No shipments assigned to your storage facility yet.</p>
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-7 w-7" aria-hidden="true">
+                        <path d="M3 10 12 4l9 6v10H3V10Z" stroke="currentColor" stroke-width="1.7"
+                            stroke-linejoin="round" />
+                        <path d="M9 20v-6h6v6M3 10h18" stroke="currentColor" stroke-width="1.7" />
+                    </svg>
+                </div>
+                <h3 class="mt-5 text-lg font-bold text-[#142B4A]">No shipments assigned yet</h3>
+                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    Shipments assigned to your storage facility will appear here. Once available, you can verify
+                    incoming consignments and manage dispatch.
+                </p>
             </div>
             {% endif %}
-        </div>
+        </section>
+
+        <footer class="mt-10 border-t border-slate-200 py-6 text-center text-xs leading-6 text-slate-500">
+            <p>TradeSetu · Supply chain transparency for Indian MSMEs</p>
+            <p>Created by Krish Gupta and Atharva Jagtap · MIT ADT University · © 2026</p>
+        </footer>
     </div>
-</div>
+</main>
 
 <!-- Delivery Dispatch Modal -->
-<div id="deliveryModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
-    <form method="POST" action="/dispatch_delivery" class="bg-white p-6 rounded flex flex-col gap-3">
+<div id="deliveryModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 p-4" role="dialog"
+    aria-modal="true" aria-labelledby="deliveryModalTitle">
+    <form method="POST" action="{{ url_for('dispatch_delivery') }}"
+        class="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" id="delivery_shipment_id" name="shipment_id">
-        <input type="text" name="delivery_name" placeholder="Delivery Person Name" required
-            class="border px-3 py-2 rounded">
-        <input type="text" name="delivery_phone" placeholder="Phone Number" required class="border px-3 py-2 rounded">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Confirm Dispatch</button>
+
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Last-mile logistics</p>
+        <h2 id="deliveryModalTitle" class="mt-2 text-2xl font-extrabold text-[#142B4A]">Dispatch for delivery</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-500">Enter the delivery person's contact details before dispatching
+            this shipment.</p>
+
+        <div class="mt-6 space-y-4">
+            <div>
+                <label for="delivery_name" class="mb-1.5 block text-sm font-semibold text-slate-700">Delivery person
+                    name</label>
+                <input type="text" id="delivery_name" name="delivery_name" placeholder="Full name" required
+                    class="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            </div>
+            <div>
+                <label for="delivery_phone" class="mb-1.5 block text-sm font-semibold text-slate-700">Phone
+                    number</label>
+                <input type="tel" id="delivery_phone" name="delivery_phone" placeholder="Contact number" required
+                    class="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            </div>
+        </div>
+
+        <div class="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button type="button" onclick="closeDeliveryForm()"
+                class="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+            <button type="submit"
+                class="rounded-xl bg-[#142B4A] px-5 py-3 text-sm font-bold text-white hover:bg-blue-900">Confirm
+                dispatch</button>
+        </div>
     </form>
 </div>
 
 <!-- QR Scanner Modal -->
-<div id="scannerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-    <div class="relative">
-        <div id="reader" style="width:300px;"></div>
-        <div class="absolute border-4 rounded-lg" style="
-                width: 200px;
-                height: 200px;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                border: 4px solid #00ff88;
-                box-shadow: 0 0 15px #00ff88;
-             ">
-        </div>
+<div id="scannerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4" role="dialog"
+    aria-modal="true" aria-label="Shipment QR scanner">
+    <div class="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+        <button type="button" onclick="closeScanner()" aria-label="Close QR scanner"
+            class="absolute right-4 top-4 rounded-lg px-2 py-1 text-2xl text-slate-500 hover:bg-slate-100">×</button>
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Shipment verification</p>
+        <h2 class="mt-2 text-2xl font-extrabold text-[#142B4A]">Scan shipment QR</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-500">Position the shipment QR code inside the scanning area.</p>
+        <div id="reader" class="mx-auto mt-5 w-full max-w-xs overflow-hidden rounded-xl"></div>
+        <p class="mt-4 text-xs leading-5 text-slate-500">Camera access requires browser permission. Use localhost or
+            HTTPS.</p>
+        <button type="button" onclick="closeScanner()"
+            class="mt-5 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel
+            scan</button>
     </div>
-    <button onclick="closeScanner()" class="absolute top-5 right-5 text-white text-2xl">✕</button>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -168,130 +427,179 @@
     let scanning = false;
 
     function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
     }
 
     function startScan(shipmentId) {
         if (scanning) return;
-        scanning = true;
 
-        const modal = document.getElementById("scannerModal");
-        modal.classList.remove("hidden");
+        if (typeof Html5Qrcode === 'undefined') {
+            alert('The QR scanner library could not load. Check your internet connection and reload.');
+            return;
+        }
+
+        scanning = true;
+        const modal = document.getElementById('scannerModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
 
         setTimeout(() => {
-            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode = new Html5Qrcode('reader');
 
             Html5Qrcode.getCameras().then(devices => {
-                if (devices.length === 0) {
-                    alert("No camera found");
+                if (!devices || !devices.length) {
+                    alert('No camera found.');
                     closeScanner();
                     return;
                 }
 
-                let cameraId = devices[0].id;
+                return html5QrCode.start(
+                    devices[0].id,
+                    { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
+                    decodedText => {
+                        const parts = decodedText.trim().replace(/\n/g, '').replace(/\r/g, '').split('|');
 
-                html5QrCode.start(
-                    cameraId,
-                    {
-                        fps: 10,
-                        qrbox: { width: 200, height: 200 },
-                        aspectRatio: 1.0
-                    },
-                    (decodedText) => {
-                        let cleanQR = decodedText.trim().replace(/\n/g, "");
-
-                        if (!cleanQR.includes("|")) {
-                            alert("Invalid QR");
+                        if (parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) {
+                            alert('Invalid QR format.');
                             return;
                         }
 
-                        let [qrShipmentId, qrHash] = cleanQR.split("|");
+                        const qrShipmentId = parts[0].trim();
+                        const qrHash = parts[1].trim();
 
                         if (qrShipmentId !== shipmentId) {
-                            alert("Wrong QR");
+                            alert('This QR code belongs to a different shipment.');
                             return;
                         }
 
-                        fetch("/verify_hash", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRFToken": getCsrfToken()
-                            },
-                            body: JSON.stringify({
-                                shipment_id: qrShipmentId,
-                                qr_hash: qrHash
-                            })
-                        })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.status !== "valid") {
-                                    alert("Tampered");
-                                    return;
-                                }
+                        const scanner = html5QrCode;
+                        scanner.stop().catch(() => { }).finally(() => {
+                            scanning = false;
 
-                                document.getElementById("qty_" + shipmentId).disabled = false;
-                                document.getElementById("confirm_" + shipmentId).disabled = false;
-                                alert("QR Verified");
-
-                                html5QrCode.stop();
-                                scanning = false;
-                                modal.classList.add("hidden");
+                            fetch('/verify_hash', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCsrfToken()
+                                },
+                                body: JSON.stringify({ shipment_id: qrShipmentId, qr_hash: qrHash })
                             })
-                            .catch(err => {
-                                alert("Error verifying QR");
-                            });
+                                .then(async res => {
+                                    const data = await res.json();
+                                    if (!res.ok) throw new Error(data.message || 'Verification request failed.');
+                                    return data;
+                                })
+                                .then(data => {
+                                    if (data.status !== 'valid') {
+                                        alert(data.message || 'Integrity verification failed. Do not receive this shipment.');
+                                        closeScanner();
+                                        return;
+                                    }
+
+                                    const qtyInput = document.getElementById('qty_' + shipmentId);
+                                    const confirmButton = document.getElementById('confirm_' + shipmentId);
+                                    qtyInput.disabled = false;
+                                    qtyInput.classList.remove('bg-slate-100');
+                                    qtyInput.classList.add('bg-white');
+                                    confirmButton.disabled = false;
+
+                                    alert('QR verified. Enter the actual received quantity.');
+                                    closeScanner();
+                                })
+                                .catch(error => {
+                                    console.error('QR verification error:', error);
+                                    alert(error.message || 'QR verification failed.');
+                                    closeScanner();
+                                });
+                        });
                     },
-                    (error) => {
-                        // ignore scanning noise
-                    }
-                );
-            }).catch(err => {
-                alert("Error accessing camera");
+                    () => { }
+                ).catch(error => {
+                    console.error('Camera start error:', error);
+                    alert('Could not start the camera. Check browser camera permissions.');
+                    closeScanner();
+                });
+            }).catch(error => {
+                console.error('Camera access error:', error);
+                alert('Camera access was denied or is unavailable.');
                 closeScanner();
             });
-        }, 500);
-    }
-
-    function openDeliveryForm(shipmentId) {
-        document.getElementById("delivery_shipment_id").value = shipmentId;
-        document.getElementById("deliveryModal").classList.remove("hidden");
+        }, 250);
     }
 
     function closeScanner() {
-        if (html5QrCode) {
-            html5QrCode.stop().catch(() => { });
+        const modal = document.getElementById('scannerModal');
+
+        if (html5QrCode && scanning) {
+            const scanner = html5QrCode;
+            html5QrCode = null;
+            scanning = false;
+            scanner.stop().catch(() => { });
+        } else {
+            html5QrCode = null;
+            scanning = false;
         }
-        scanning = false;
-        document.getElementById("scannerModal").classList.add("hidden");
+
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function openDeliveryForm(shipmentId) {
+        document.getElementById('delivery_shipment_id').value = shipmentId;
+        const modal = document.getElementById('deliveryModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDeliveryForm() {
+        const modal = document.getElementById('deliveryModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
 
     function confirmReceive(shipmentId) {
-        let qty = document.getElementById("qty_" + shipmentId).value;
-        if (!qty) {
-            alert("Enter quantity");
+        const input = document.getElementById('qty_' + shipmentId);
+        const qty = input.value.trim();
+
+        if (qty === '' || !Number.isInteger(Number(qty)) || Number(qty) < 0) {
+            alert('Enter a valid received quantity (zero or greater).');
+            input.focus();
             return;
         }
 
-        fetch("/verify_storage_qty", {
-            method: "POST",
+        const button = document.getElementById('confirm_' + shipmentId);
+        button.disabled = true;
+
+        fetch('/verify_storage_qty', {
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCsrfToken()
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
             },
-            body: JSON.stringify({
-                shipment_id: shipmentId,
-                received_qty: qty
-            })
+            body: JSON.stringify({ shipment_id: shipmentId, received_qty: qty })
         })
-            .then(res => res.json())
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Receipt confirmation failed.');
+                return data;
+            })
             .then(data => {
-                alert(data.message);
+                alert(data.message || 'Receipt confirmation submitted.');
                 location.reload();
             })
-            .catch(err => {
-                alert("Error confirming receive");
+            .catch(error => {
+                console.error('Receipt confirmation error:', error);
+                alert(error.message || 'Error confirming receipt.');
+                button.disabled = false;
             });
     }
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            closeScanner();
+            closeDeliveryForm();
+        }
+    });
 </script>
 {% endblock %}

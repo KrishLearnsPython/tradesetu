@@ -1,144 +1,256 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="relative min-h-screen">
+<main class="min-h-screen bg-[#F5F7FA] text-slate-900">
+    <div class="grid min-h-screen lg:grid-cols-2">
 
-    <!-- ✅ Background Image -->
-    <div class="absolute inset-0">
-        <img src="{{ url_for('static', filename='images/bg.jpg') }}" 
-             class="w-full h-full object-cover blur-[2px] scale-105" />
+        <!-- Brand panel -->
+        <section
+            class="relative hidden overflow-hidden bg-[#142B4A] lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
+            <div class="pointer-events-none absolute -right-28 top-10 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl">
+            </div>
+            <div class="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-sky-400/10 blur-3xl">
+            </div>
 
-        <!-- Gradient Overlay -->
-        <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
+            <a href="{{ url_for('index') }}" class="relative z-10 inline-flex w-fit items-center gap-3">
+                <span
+                    class="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-7 w-7" aria-hidden="true">
+                        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                            stroke-linejoin="round" />
+                        <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span>
+                    <span class="block text-2xl font-extrabold tracking-tight text-white">TradeSetu</span>
+                    <span class="block text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200">Supply chain
+                        visibility</span>
+                </span>
+            </a>
 
-        <!-- Optional blue tint -->
-        <div class="absolute inset-0 bg-blue-900/30"></div>
-    </div>
+            <div class="relative z-10 max-w-xl py-12">
+                <span
+                    class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-semibold text-blue-100">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                    A connected supply chain
+                </span>
 
-    <!-- ✅ Content -->
-    <div class="relative z-10">
+                <h1 class="mt-7 text-4xl font-extrabold leading-tight tracking-tight text-white xl:text-5xl">
+                    Good to see you again.
+                    <span class="mt-2 block text-blue-300">Let's keep trade moving.</span>
+                </h1>
 
-        <!-- NAVBAR (slightly adjusted for visibility) -->
-        <nav class="bg-black/40 backdrop-blur-md border-b border-white/20">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <div>
-                        <a href="/" class="text-white hover:text-blue-400 transition duration-300 font-medium">
-                            ← TradeSetu
-                        </a>
+                <p class="mt-6 max-w-lg text-base leading-8 text-slate-300">
+                    Sign in to your workspace to manage shipments, verify handoffs and keep your supply chain journey
+                    organised.
+                </p>
+
+                <div class="mt-10 space-y-4">
+                    <div class="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <span
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-200">
+                            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                                <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-2zM14 18h2v2h-2z"
+                                    stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-white">QR-based verification</p>
+                            <p class="mt-1 text-xs leading-5 text-slate-300">Check shipment references at key handoffs.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <span
+                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-200">
+                            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                                <path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z" stroke="currentColor"
+                                    stroke-width="1.7" stroke-linejoin="round" />
+                                <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-white">Role-based workspaces</p>
+                            <p class="mt-1 text-xs leading-5 text-slate-300">Tools for manufacturers, distributors,
+                                storage and retailers.</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </nav>
 
-        <!-- LOGIN SECTION -->
-        <div class="min-h-screen flex items-center justify-center px-6">
-            <div class="w-full max-w-md">
+            <div class="relative z-10 border-t border-white/15 pt-6">
+                <p class="text-sm font-medium text-slate-300">Connecting trade. Building trust.</p>
+                <p class="mt-2 text-xs text-slate-400">TradeSetu </p>
+                <p class="mt-2 text-xs text-slate-400">Developed by Krish Gupta and Atharva Jagtap</p>
+            </div>
+        </section>
 
-                <!-- ✅ KEEP YOUR ORIGINAL CARD DESIGN -->
-                <div class="bg-white p-8 rounded-xl shadow-xl border border-gray-200">
+        <!-- Login area -->
+        <section class="flex min-h-screen flex-col bg-white">
+            <header class="flex items-center justify-between gap-6 px-5 py-5 sm:px-8 lg:justify-end lg:px-12">
+                <a href="{{ url_for('index') }}"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-blue-700 lg:hidden">
+                    <span aria-hidden="true">←</span> TradeSetu
+                </a>
+                <a href="{{ url_for('index') }}"
+                    class="hidden text-sm font-medium text-slate-500 transition hover:text-blue-700 lg:inline-flex">
+                    ← Back to home
+                </a>
+                <a href="{{ url_for('register') }}"
+                    class="shrink-0 whitespace-nowrap text-sm font-semibold text-blue-700 transition hover:text-blue-800">
+                    Create account
+                </a>
+            </header>
 
-                    <!-- Branding Header -->
-                    <div class="text-center mb-6">
-                        <h1 class="text-2xl font-bold text-gray-900 mb-1">
-                            TradeSetu
-                        </h1>
-                        <p class="text-gray-600 text-xs">Connecting Trade. Securing Growth.</p>
+            <div class="flex flex-1 items-center justify-center px-5 py-10 sm:px-10">
+                <div class="w-full max-w-md">
+                    <div class="mb-8 lg:hidden">
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#142B4A] text-white shadow-lg shadow-blue-950/10">
+                            <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+                                <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linejoin="round" />
+                                <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <p class="mt-3 text-xl font-extrabold text-[#142B4A]">TradeSetu</p>
                     </div>
 
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold mb-2 text-gray-900">Welcome Back</h2>
-                        <p class="text-gray-600">Sign in to your TradeSetu account</p>
+                    <div class="mb-8">
+                        <p class="text-sm font-bold uppercase tracking-[0.16em] text-blue-700">Welcome back</p>
+                        <h2 class="mt-3 text-3xl font-extrabold tracking-tight text-[#142B4A] sm:text-4xl">Sign in to
+                            your account</h2>
+                        <p class="mt-3 text-sm leading-6 text-slate-500">Enter your account details to continue to your
+                            workspace.</p>
                     </div>
 
-                    <form method="POST" class="space-y-6">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <form method="POST" class="space-y-5" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
                         <div>
-                            <label class="block text-sm font-semibold mb-2 text-gray-700">
-                                Email Address
-                            </label>
-                            <input type="email" name="email" id="login-email"
-                                class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg 
-                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                                       focus:border-blue-500 transition-all" required>
-                            <div id="login-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                            <label for="login-email" class="mb-2 block text-sm font-semibold text-slate-700">Email
+                                address</label>
+                            <input type="email" name="email" id="login-email" autocomplete="email"
+                                placeholder="you@company.com"
+                                class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"
+                                aria-describedby="login-email-error" required>
+                            <div id="login-email-error" class="mt-2 hidden text-sm font-medium text-red-600"
+                                role="alert"></div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold mb-2 text-gray-700">
-                                Password
-                            </label>
-                            <input type="password" name="password" id="login-password"
-                                class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg 
-                                       focus:outline-none focus:ring-2 focus:ring-blue-500 
-                                       focus:border-blue-500 transition-all" required>
-                            <div id="login-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                            <div class="mb-2 flex items-center justify-between gap-3">
+                                <label for="login-password"
+                                    class="block text-sm font-semibold text-slate-700">Password</label>
+                                <button type="button" id="toggle-password"
+                                    class="text-xs font-semibold text-blue-700 transition hover:text-blue-800"
+                                    aria-controls="login-password" aria-pressed="false">
+                                    Show password
+                                </button>
+                            </div>
+                            <input type="password" name="password" id="login-password" autocomplete="current-password"
+                                placeholder="Enter your password"
+                                class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"
+                                aria-describedby="login-password-error" required>
+                            <div id="login-password-error" class="mt-2 hidden text-sm font-medium text-red-600"
+                                role="alert"></div>
                         </div>
 
                         <button type="submit" id="login-submit"
-                            class="w-full bg-blue-600 text-white py-3 rounded-lg 
-                                   hover:bg-blue-700 transition-all duration-300 font-semibold">
-                            Sign In
+                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">
+                            Sign in <span aria-hidden="true">→</span>
                         </button>
                     </form>
 
-                    <div class="mt-6 text-center">
-                        <p class="text-gray-600">
-                            Don't have an account?
+                    <div class="mt-7 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-center text-sm text-slate-600">
+                            Don't have a TradeSetu account?
                             <a href="{{ url_for('register') }}"
-                               class="text-blue-600 hover:text-blue-700 transition duration-300 font-semibold ml-1">
-                                Create one
-                            </a>
+                                class="font-bold text-blue-700 underline-offset-4 hover:underline">Create one</a>
                         </p>
                     </div>
 
+                    <p class="mt-8 text-center text-xs leading-5 text-slate-400">
+                        Access is intended for registered TradeSetu users.
+                    </p>
                 </div>
             </div>
-        </div>
+
+            <footer class="border-t border-slate-100 px-5 py-4 text-center">
+
+            </footer>
+        </section>
     </div>
-</div>
+</main>
 
-<!-- ✅ YOUR ORIGINAL SCRIPT (UNCHANGED) -->
 <script>
-document.getElementById('login-submit').addEventListener('click', function(e) {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
+    (function () {
+        const form = document.querySelector('form[method="POST"]');
+        const emailInput = document.getElementById('login-email');
+        const passwordInput = document.getElementById('login-password');
+        const toggleButton = document.getElementById('toggle-password');
 
-    let hasError = false;
+        if (toggleButton && passwordInput) {
+            toggleButton.addEventListener('click', function () {
+                const isVisible = passwordInput.type === 'text';
+                passwordInput.type = isVisible ? 'password' : 'text';
+                toggleButton.textContent = isVisible ? 'Show password' : 'Hide password';
+                toggleButton.setAttribute('aria-pressed', String(!isVisible));
+            });
+        }
 
-    hideError('login-email');
-    hideError('login-password');
+        function showError(elementId, message) {
+            const errorDiv = document.getElementById(elementId + '-error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            const input = document.getElementById(elementId);
+            input.setAttribute('aria-invalid', 'true');
+        }
 
-    if (!email) {
-        showError('login-email', 'Email is required');
-        hasError = true;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-        showError('login-email', 'Please enter a valid email address');
-        hasError = true;
-    }
+        function hideError(elementId) {
+            const errorDiv = document.getElementById(elementId + '-error');
+            errorDiv.textContent = '';
+            errorDiv.classList.add('hidden');
+            document.getElementById(elementId).removeAttribute('aria-invalid');
+        }
 
-    if (!password) {
-        showError('login-password', 'Password is required');
-        hasError = true;
-    }
+        if (emailInput && passwordInput && form) {
+            [emailInput, passwordInput].forEach(function (input) {
+                input.addEventListener('input', function () {
+                    hideError(input.id);
+                });
+            });
 
-    if (hasError) {
-        e.preventDefault();
-        return false;
-    }
-});
+            form.addEventListener('submit', function (event) {
+                let hasError = false;
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
 
-function showError(elementId, message) {
-    const errorDiv = document.getElementById(elementId + '-error');
-    errorDiv.textContent = message;
-    errorDiv.classList.remove('hidden');
-}
+                hideError('login-email');
+                hideError('login-password');
 
-function hideError(elementId) {
-    const errorDiv = document.getElementById(elementId + '-error');
-    errorDiv.classList.add('hidden');
-}
+                if (!email) {
+                    showError('login-email', 'Email is required.');
+                    hasError = true;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showError('login-email', 'Please enter a valid email address.');
+                    hasError = true;
+                }
+
+                if (!password.trim()) {
+                    showError('login-password', 'Password is required.');
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    event.preventDefault();
+                }
+            });
+        }
+    })();
 </script>
-
 {% endblock %}

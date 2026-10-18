@@ -1,66 +1,377 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 flex items-center justify-center px-6">
-    <div class="w-full max-w-2xl">
-        <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
-            <h1 class="text-3xl font-bold text-gray-900 mb-6">Scan QR Code</h1>
-            <p class="text-gray-600 mb-6">Use your camera to scan the shipment QR code for verification.</p>
+<style>
+    .ts-scan-page {
+        min-height: calc(100vh - 20px);
+        background: #F5F7FA;
+        color: #172B4D;
+    }
 
-            <div id="reader" class="w-full mb-6 border-2 border-dashed border-gray-300 rounded-lg p-4"></div>
+    .ts-scan-card {
+        background: white;
+        border: 1px solid #E5EAF1;
+        border-radius: 18px;
+        box-shadow: 0 8px 28px rgba(15, 23, 42, .05);
+    }
 
-            <div id="result" class="mb-6 hidden">
-                <p class="text-green-600 font-semibold">QR Code scanned successfully!</p>
-                <p id="scanned-text" class="text-gray-700 mt-2"></p>
-            </div>
+    #reader {
+        width: 100%;
+        overflow: hidden;
+        border: 1px dashed #CBD5E1;
+        border-radius: 14px;
+        background: #F8FAFC;
+    }
 
-            <div class="text-center">
-                <button id="start-scan" class="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300 font-semibold">
-                    Start Scanning
-                </button>
-                <a href="{{ url_for('distributor_dashboard') }}" class="ml-4 text-blue-600 hover:text-blue-700 transition duration-300 font-semibold">
-                    Back to Dashboard
+    #reader video {
+        border-radius: 10px;
+        object-fit: cover;
+    }
+
+    #reader img {
+        display: inline-block;
+    }
+
+    #reader button {
+        margin: 8px;
+        padding: 9px 13px;
+        border: 1px solid #CBD5E1;
+        border-radius: 8px;
+        background: white;
+        color: #142B4A;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    #reader select {
+        max-width: 100%;
+        margin: 8px;
+        padding: 8px;
+        border: 1px solid #CBD5E1;
+        border-radius: 8px;
+        background: white;
+    }
+
+    #reader a {
+        color: #2563EB;
+    }
+
+    .ts-scan-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 18px;
+        border-radius: 10px;
+        background: #2563EB;
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+        transition: background .15s;
+    }
+
+    .ts-scan-btn:hover {
+        background: #1D4ED8;
+    }
+
+    .ts-scan-btn:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+    }
+
+    .ts-scan-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 18px;
+        border-radius: 10px;
+        background: #F1F5F9;
+        color: #334155;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .ts-scan-secondary:hover {
+        background: #E2E8F0;
+    }
+</style>
+
+<div class="ts-scan-page">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between gap-4" style="min-height:72px">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                    <span class="flex items-center justify-center rounded-xl text-white font-bold text-lg"
+                        style="width:40px;height:40px;background:#142B4A">T</span>
+                    <span>
+                        <span class="block text-xl font-extrabold tracking-tight" style="color:#142B4A">TradeSetu</span>
+                        <span class="block text-xs" style="color:#64748B">Supply chain workspace</span>
+                    </span>
+                </a>
+
+                <a href="{{ url_for('distributor_dashboard') }}" class="ts-scan-secondary">
+                    ← <span class="hidden sm:inline ml-2">Dashboard</span>
                 </a>
             </div>
         </div>
-    </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <!-- Page heading -->
+        <section class="rounded-2xl p-6 sm:p-8 mb-7 text-white relative overflow-hidden"
+            style="background:linear-gradient(115deg,#142B4A 0%,#1E4775 75%,#2563EB 135%)">
+            <div class="relative" style="z-index:1">
+                <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#BFDBFE">Shipment verification
+                </p>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Scan shipment QR code</h1>
+                <p class="mt-2 text-sm sm:text-base" style="color:#D7E6F8">
+                    Scan the shipment's identification code to continue its verification workflow.
+                </p>
+            </div>
+            <div class="absolute rounded-full"
+                style="width:220px;height:220px;border:1px solid rgba(255,255,255,.12);right:-50px;top:-100px"></div>
+            <div class="absolute rounded-full"
+                style="width:160px;height:160px;border:1px solid rgba(255,255,255,.12);right:-10px;top:-60px"></div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <!-- Scanner -->
+            <section class="lg:col-span-2 ts-scan-card p-5 sm:p-7">
+                <div class="flex items-start gap-3 mb-5">
+                    <div class="flex items-center justify-center rounded-xl"
+                        style="width:44px;height:44px;background:#DBEAFE;color:#1D4ED8">
+                        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.8" aria-hidden="true">
+                            <path
+                                d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
+                            <path d="M7 12h10M12 7v10" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold" style="color:#142B4A">QR scanner</h2>
+                        <p class="text-sm mt-1" style="color:#64748B">
+                            Allow camera access when your browser asks.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="reader" class="p-3 sm:p-4 mb-4"></div>
+
+                <div id="scan-status" role="status" aria-live="polite" class="rounded-xl p-3 mb-5 text-sm"
+                    style="background:#F1F5F9;color:#475569">
+                    Ready to scan. Select a camera to begin.
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="start-scan" type="button" class="ts-scan-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" aria-hidden="true">
+                            <path
+                                d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" />
+                            <path d="m9 12 2 2 4-4" />
+                        </svg>
+                        Start scanning
+                    </button>
+
+                    <button id="retry-scan" type="button" class="ts-scan-secondary" hidden>
+                        Try again
+                    </button>
+                </div>
+
+                <div id="result" class="mt-5 rounded-xl p-4" hidden>
+                    <p id="result-title" class="font-bold text-sm"></p>
+                    <p id="scanned-text" class="text-sm mt-2 break-all" style="color:#475569"></p>
+                </div>
+            </section>
+
+            <!-- Instructions -->
+            <aside class="space-y-5">
+                <section class="ts-scan-card p-5">
+                    <h2 class="font-bold text-lg" style="color:#142B4A">How it works</h2>
+
+                    <div class="space-y-5 mt-5">
+                        <div class="flex gap-3">
+                            <span class="flex-shrink-0 flex items-center justify-center rounded-full font-bold text-sm"
+                                style="width:30px;height:30px;background:#DBEAFE;color:#1D4ED8">1</span>
+                            <div>
+                                <p class="text-sm font-semibold">Start the scanner</p>
+                                <p class="text-xs mt-1" style="color:#64748B">
+                                    Choose a camera and grant permission.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <span class="flex-shrink-0 flex items-center justify-center rounded-full font-bold text-sm"
+                                style="width:30px;height:30px;background:#DBEAFE;color:#1D4ED8">2</span>
+                            <div>
+                                <p class="text-sm font-semibold">Align the QR code</p>
+                                <p class="text-xs mt-1" style="color:#64748B">
+                                    Keep the complete code in view with good lighting.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <span class="flex-shrink-0 flex items-center justify-center rounded-full font-bold text-sm"
+                                style="width:30px;height:30px;background:#DBEAFE;color:#1D4ED8">3</span>
+                            <div>
+                                <p class="text-sm font-semibold">Review verification</p>
+                                <p class="text-xs mt-1" style="color:#64748B">
+                                    TradeSetu opens the shipment verification page.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rounded-xl p-5" style="background:#EFF6FF;border:1px solid #DBEAFE">
+                    <div class="flex items-start gap-3">
+                        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="1.8"
+                            aria-hidden="true">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 11v5M12 8h.01" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-bold" style="color:#1E40AF">Scanning tip</p>
+                            <p class="text-xs mt-1 leading-5" style="color:#1D4ED8">
+                                Use HTTPS or localhost for camera access. If scanning fails,
+                                check browser permissions and lighting.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <footer class="mt-10 pt-6 border-t text-center text-xs" style="border-color:#E2E8F0;color:#64748B">
+            <p>TradeSetu · Trusted supply chain visibility for Indian MSMEs</p>
+            <p class="mt-1">Created by Krish Gupta and Atharva Jagtap · MIT ADT University · © 2026</p>
+        </footer>
+    </main>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-    let html5QrcodeScanner;
+    let html5QrcodeScanner = null;
+    let scanInProgress = false;
+    let scanHandled = false;
 
-    document.getElementById('start-scan').addEventListener('click', function() {
-        this.disabled = true;
-        this.textContent = 'Scanning...';
+    const startButton = document.getElementById('start-scan');
+    const retryButton = document.getElementById('retry-scan');
+    const statusBox = document.getElementById('scan-status');
+    const resultBox = document.getElementById('result');
+    const scannedText = document.getElementById('scanned-text');
+    const resultTitle = document.getElementById('result-title');
 
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", { fps: 10, qrbox: 250 });
+    function setScanStatus(message, type = 'info') {
+        const styles = {
+            info: ['#F1F5F9', '#475569'],
+            success: ['#F0FDF4', '#166534'],
+            error: ['#FEF2F2', '#B91C1C']
+        };
 
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-    });
+        const selected = styles[type] || styles.info;
+        statusBox.textContent = message;
+        statusBox.style.background = selected[0];
+        statusBox.style.color = selected[1];
+    }
 
-    function onScanSuccess(decodedText, decodedResult) {
-        // Stop scanning
-        html5QrcodeScanner.clear();
+    async function stopScanner() {
+        if (html5QrcodeScanner && scanInProgress) {
+            try {
+                await html5QrcodeScanner.stop();
+            } catch (error) {
+                console.warn('Scanner stop:', error);
+            }
+        }
 
-        // Show result
-        document.getElementById('result').classList.remove('hidden');
-        document.getElementById('scanned-text').textContent = decodedText;
+        scanInProgress = false;
+    }
 
-        // Parse QR data: shipment_id|hash
+    async function startScanner() {
+        if (scanInProgress) return;
+
+        if (typeof Html5QrcodeScanner === 'undefined') {
+            setScanStatus('The scanner library did not load. Check your internet connection and refresh the page.', 'error');
+            return;
+        }
+
+        scanHandled = false;
+        resultBox.hidden = true;
+        retryButton.hidden = true;
+        startButton.disabled = true;
+        startButton.textContent = 'Starting camera…';
+        setScanStatus('Starting scanner. Please allow camera access.');
+
+        try {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                'reader',
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    rememberLastUsedCamera: true
+                },
+                false
+            );
+
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            scanInProgress = true;
+            startButton.textContent = 'Scanner active';
+            setScanStatus('Point your camera at the complete shipment QR code.');
+        } catch (error) {
+            console.error(error);
+            startButton.disabled = false;
+            startButton.textContent = 'Start scanning';
+            setScanStatus('Could not start the scanner. Check camera permissions and try again.', 'error');
+        }
+    }
+
+    async function onScanSuccess(decodedText) {
+        if (scanHandled) return;
+        scanHandled = true;
+
+        resultBox.hidden = false;
+        resultTitle.textContent = 'QR code detected';
+        resultTitle.style.color = '#166534';
+        scannedText.textContent = decodedText;
+        setScanStatus('QR code detected. Opening shipment verification…', 'success');
+
+        startButton.disabled = true;
+        retryButton.hidden = true;
+
+        await stopScanner();
+
         const parts = decodedText.split('|');
-        if (parts.length === 2) {
-            const shipmentId = parts[0];
-            // Redirect to verify page
-            window.location.href = `/verify/${shipmentId}`;
+
+        if (parts.length === 2 && parts[0].trim()) {
+            const shipmentId = parts[0].trim();
+
+            // Keep the existing verification route; do not trust the QR hash as proof by itself.
+            window.location.href = `/verify/${encodeURIComponent(shipmentId)}`;
         } else {
-            alert('Invalid QR code format');
+            scanHandled = false;
+            resultTitle.textContent = 'Invalid QR code';
+            resultTitle.style.color = '#B91C1C';
+            setScanStatus('This QR code does not match the expected shipment format. Try another code.', 'error');
+            startButton.disabled = false;
+            startButton.textContent = 'Start scanning';
+            retryButton.hidden = false;
         }
     }
 
     function onScanFailure(error) {
-        console.warn(`Code scan error = ${error}`);
+        // Most frames do not contain a QR code. Avoid logging every unsuccessful frame.
     }
+
+    startButton.addEventListener('click', startScanner);
+
+    retryButton.addEventListener('click', async function () {
+        await stopScanner();
+        startButton.disabled = false;
+        startButton.textContent = 'Start scanning';
+        await startScanner();
+    });
 </script>
 {% endblock %}

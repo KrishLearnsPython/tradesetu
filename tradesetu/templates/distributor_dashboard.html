@@ -1,404 +1,647 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Header Navigation -->
-<nav class="bg-white shadow-md border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <a href="/" class="text-2xl font-bold text-blue-600">TradeSetu</a>
-            <div class="flex gap-6 items-center">
-                <a href="/distributor_dashboard" class="text-gray-700 hover:text-blue-600 transition duration-200 font-medium">
-                    Dashboard
-                </a>
-                <form action="{{ url_for('logout') }}" method="POST" class="inline">
+<main class="min-h-screen bg-[#F5F7FA] text-slate-900">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
+        <div class="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
+            <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#142B4A] text-white">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
+                        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                            stroke-linejoin="round" />
+                        <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span>
+                    <span class="block text-lg font-extrabold tracking-tight text-[#142B4A]">TradeSetu</span>
+                    <span
+                        class="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 sm:block">Supply
+                        chain visibility</span>
+                </span>
+            </a>
+
+            <div class="flex items-center gap-3">
+                <div class="hidden text-right sm:block">
+                    <p class="max-w-40 truncate text-sm font-semibold text-slate-800">{{ session.get('business_name',
+                        'Your Business') }}</p>
+                    <p class="text-xs text-slate-500">Distributor</p>
+                </div>
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800"
+                    aria-hidden="true">
+                    {{ (session.get('business_name', 'D') or 'D')[:1]|upper }}
+                </div>
+                <form action="{{ url_for('logout') }}" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="text-red-600 hover:text-red-700 transition duration-200 font-medium">
-                        Logout
+                    <button type="submit"
+                        class="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                        Sign out
                     </button>
                 </form>
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Page Title Section -->
-        <div class="mb-8">
-            <h2 class="text-3xl font-bold text-gray-900">Distributor Dashboard</h2>
-            <p class="text-gray-600 mt-2">Welcome {{ session['business_name'] }}</p>
-            <p class="text-gray-500 mt-1">Scan QR code to verify shipment integrity, then enter received quantity</p>
+    <div class="mx-auto max-w-7xl px-5 py-9 sm:px-8 sm:py-12">
+
+        <!-- Welcome banner -->
+        <section
+            class="relative overflow-hidden rounded-3xl bg-[#142B4A] px-6 py-8 text-white shadow-sm sm:px-10 sm:py-10">
+            <div class="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl"
+                aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -right-8 top-8 h-48 w-48 rounded-full border border-white/10"
+                aria-hidden="true"></div>
+
+            <div class="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div class="max-w-2xl">
+                    <span
+                        class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-100">
+                        <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                        Distributor workspace
+                    </span>
+                    <h1 class="mt-5 text-3xl font-extrabold tracking-tight sm:text-4xl">
+                        Welcome back, {{ session.get('business_name', 'Distributor') }}.
+                    </h1>
+                    <p class="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+                        Verify incoming shipments, confirm received quantities, and coordinate storage with confidence.
+                    </p>
+                </div>
+
+                <div class="shrink-0 rounded-2xl border border-white/15 bg-white/10 p-5 sm:min-w-48">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-blue-200">Your workspace</p>
+                    <p class="mt-2 text-3xl font-extrabold">{{ shipments|length }}</p>
+                    <p class="mt-1 text-sm text-slate-300">Assigned shipment{{ 's' if shipments|length != 1 else '' }}
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="mt-6 space-y-3" role="status" aria-live="polite">
+            {% for message in messages %}
+            <div class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                {{ message }}
+            </div>
+            {% endfor %}
         </div>
+        {% endif %}
+        {% endwith %}
 
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+        <!-- Overview -->
+        <section class="mb-6 mt-10">
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Overview</p>
+            <h2 class="mt-2 text-2xl font-extrabold tracking-tight text-[#142B4A]">Shipment operations</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+                Track shipment status and complete the required receiving and logistics actions.
+            </p>
+        </section>
+
+        <!-- Summary cards: calculated from current shipment records -->
+        <section class="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-slate-500">Assigned shipments</span>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                                stroke-linejoin="round" />
+                            <path d="m3.5 7.7 8.5 4.6 8.5-4.6M12 21v-8.7" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-4 text-3xl font-extrabold text-[#142B4A]">{{ shipments|length }}</p>
+                <p class="mt-1 text-xs text-slate-500">Available in this workspace</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-slate-500">Awaiting verification</span>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+                            <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-4 text-3xl font-extrabold text-[#142B4A]">{{ shipments|selectattr('status', 'equalto',
+                    'ASSIGNED')|list|length }}</p>
+                <p class="mt-1 text-xs text-slate-500">Ready for QR scanning</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-slate-500">In transit</span>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z" stroke="currentColor" stroke-width="1.7"
+                                stroke-linejoin="round" />
+                            <circle cx="7" cy="18" r="1.8" stroke="currentColor" stroke-width="1.7" />
+                            <circle cx="18" cy="18" r="1.8" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-4 text-3xl font-extrabold text-[#142B4A]">{{ shipments|selectattr('status', 'equalto',
+                    'IN_TRANSIT')|list|length }}</p>
+                <p class="mt-1 text-xs text-slate-500">Logistics in progress</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-slate-500">Delivered</span>
+                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                            <path d="m5 12 4.5 4.5L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-4 text-3xl font-extrabold text-[#142B4A]">{{ shipments|selectattr('status', 'equalto',
+                    'DELIVERED')|list|length }}</p>
+                <p class="mt-1 text-xs text-slate-500">Marked as delivered</p>
+            </div>
+        </section>
+
+        <!-- Shipment workspace -->
+        <section>
+            <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-[#142B4A]">Your shipments</h2>
+                    <p class="mt-1 text-sm text-slate-500">Select a shipment to verify or manage its logistics.</p>
+                </div>
+                <span
+                    class="inline-flex w-fit items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600">
+                    {{ shipments|length }} total
+                </span>
+            </div>
 
             {% if shipments %}
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white border border-gray-300 rounded-lg">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Shipment ID</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Product Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Received Qty</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            {% for s in shipments %}
-                            <tr class="hover:bg-gray-50 transition duration-200">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ s.shipment_id }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ s.product_name }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <input type="number"
-                                           id="qty_{{ s.shipment_id }}"
-                                           disabled
-                                           placeholder="Enter quantity"
-                                           class="border px-2 py-1 rounded w-32 bg-gray-200">
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                        {% if s.status == 'CREATED' %}bg-gray-100 text-gray-800
-                                        {% elif s.status == 'ASSIGNED' %}bg-yellow-100 text-yellow-800
-                                        {% elif s.status == 'IN_TRANSIT' %}bg-blue-100 text-blue-800
-                                        {% elif s.status == 'DELIVERED' %}bg-green-100 text-green-800
-                                        {% elif s.status == 'TAMPERED' %}bg-red-100 text-red-800
-                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                        {{ s.status }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                    <button onclick="startScan('{{ s.shipment_id }}')"
-                                            {% if s.status != 'ASSIGNED' %}disabled{% endif %}
-                                            class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                        Scan QR
-                                    </button>
-                                    <button onclick="submitQuantity('{{ s.shipment_id }}')"
-                                            id="confirm_{{ s.shipment_id }}"
-                                            disabled
-                                            class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 transition duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                        Confirm
-                                    </button>
-                                    {% if s.status == 'IN_TRANSIT' %}
-                                        {% if s.transporter_name %}
-                                            <button onclick="openTransportForm('{{ s.shipment_id }}', '{{ s.transporter_name }}', '{{ s.vehicle_number }}', '{{ s.driver_name }}', '{{ s.driver_phone }}')"
-                                                class="bg-yellow-600 text-white px-3 py-2 rounded hover:bg-yellow-700 transition duration-200">
-                                                Update Transport Details
-                                            </button>
-                                        {% else %}
-                                            <button onclick="openTransportForm('{{ s.shipment_id }}', '', '', '', '')"
-                                                class="bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 transition duration-200">
-                                                Add Transport Details
-                                            </button>
-                                        {% endif %}
-                                        {% if storage_users %}
-                                        <div class="mt-2 flex gap-2 items-center">
-                                            <select id="storage_{{ s.shipment_id }}"
-                                                    class="border px-2 py-1 rounded text-sm">
-                                                {% for st in storage_users %}
-                                                    <option value="{{ st.user_id }}">{{ st.name }}</option>
-                                                {% endfor %}
-                                            </select>
-                                            <button onclick="assignStorage('{{ s.shipment_id }}')"
-                                                class="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 transition duration-200">
-                                                Assign Storage
-                                            </button>
-                                        </div>
-                                        {% endif %}
-                                    {% endif %}
-                                </td>
-                            </tr>
+            <div class="grid gap-5 xl:grid-cols-2">
+                {% for s in shipments %}
+                <article
+                    class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:border-blue-200 hover:shadow-md">
+
+                    <div class="border-b border-slate-100 p-5 sm:p-6">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Shipment reference
+                                </p>
+                                <h3 class="mt-1 break-all font-mono text-lg font-extrabold text-blue-700">{{
+                                    s.shipment_id }}</h3>
+                                <p class="mt-2 break-words text-base font-bold text-[#142B4A]">{{ s.product_name }}</p>
+                            </div>
+
+                            <div class="shrink-0">
+                                {% if s.status == 'CREATED' %}
+                                <span
+                                    class="inline-flex rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700">Created</span>
+                                {% elif s.status == 'ASSIGNED' %}
+                                <span
+                                    class="inline-flex rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-800">Assigned</span>
+                                {% elif s.status == 'IN_TRANSIT' %}
+                                <span
+                                    class="inline-flex rounded-full bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-800">In
+                                    transit</span>
+                                {% elif s.status == 'DELIVERED' %}
+                                <span
+                                    class="inline-flex rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">Delivered</span>
+                                {% elif s.status == 'TAMPERED' %}
+                                <span
+                                    class="inline-flex rounded-full bg-red-100 px-3 py-1.5 text-xs font-bold text-red-800">Tampered</span>
+                                {% else %}
+                                <span
+                                    class="inline-flex rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700">{{
+                                    s.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if s.city or s.state or s.pincode or s.delivery_address %}
+                        <div class="mt-5 rounded-xl bg-slate-50 p-4">
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Delivery destination
+                            </p>
+                            <p class="mt-2 text-sm font-semibold text-slate-800">
+                                {{ s.city or '' }}{% if s.city and s.state %}, {% endif %}{{ s.state or '' }}{% if
+                                s.pincode %} - {{ s.pincode }}{% endif %}
+                            </p>
+                            {% if s.delivery_address %}
+                            <p class="mt-1 break-words text-sm leading-6 text-slate-500">{{ s.delivery_address }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-5 sm:p-6">
+                        <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                            <div>
+                                <label for="qty_{{ s.shipment_id }}"
+                                    class="mb-2 block text-sm font-semibold text-slate-700">Actual quantity
+                                    received</label>
+                                <input type="number" id="qty_{{ s.shipment_id }}" min="0" step="1" disabled
+                                    placeholder="Enter received quantity"
+                                    class="w-full rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed sm:max-w-xs"
+                                    aria-label="Received quantity for {{ s.shipment_id }}">
+                                <p class="mt-2 text-xs leading-5 text-slate-500">Scan and verify the shipment QR before
+                                    entering quantity.</p>
+                            </div>
+
+                            <button type="button" onclick="submitQuantity('{{ s.shipment_id }}')"
+                                id="confirm_{{ s.shipment_id }}" disabled
+                                class="inline-flex items-center justify-center rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500">
+                                Confirm receipt
+                            </button>
+                        </div>
+
+                        <div class="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-5">
+                            <button type="button" onclick="startScan('{{ s.shipment_id }}')" {% if s.status !='ASSIGNED'
+                                %}disabled{% endif %}
+                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#142B4A] px-4 py-3 text-sm font-bold text-white transition hover:bg-blue-900 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500">
+                                <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4" aria-hidden="true">
+                                    <path
+                                        d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"
+                                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                    <path d="M8 8h3v3H8zM14 8h2M14 11h2M8 14h3v3H8zM14 14h3v3h-3z" stroke="currentColor"
+                                        stroke-width="1.5" stroke-linejoin="round" />
+                                </svg>
+                                Scan shipment QR
+                            </button>
+
+                            {% if s.status == 'IN_TRANSIT' %}
                             {% if s.transporter_name %}
-                            <tr class="bg-gray-50">
-                                <td colspan="5" class="px-6 py-2 text-sm text-gray-600">
-                                    <strong>Transport Details:</strong> {{ s.transporter_name }} | {{ s.vehicle_number }} | {{ s.driver_name }} | {{ s.driver_phone }}
-                                </td>
-                            </tr>
+                            <button type="button"
+                                onclick="openTransportForm('{{ s.shipment_id }}', '{{ s.transporter_name }}', '{{ s.vehicle_number }}', '{{ s.driver_name }}', '{{ s.driver_phone }}')"
+                                class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                                Edit transport
+                            </button>
+                            {% else %}
+                            <button type="button" onclick="openTransportForm('{{ s.shipment_id }}', '', '', '', '')"
+                                class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                                + Add transport
+                            </button>
                             {% endif %}
-                            {% if s.city or s.state or s.pincode %}
-                            <tr class="bg-gray-50">
-                                <td colspan="5" class="px-6 py-2 text-sm text-gray-600">
-                                    <div><strong>📍 Delivery Location:</strong> {{ s.city }}, {{ s.state }} - {{ s.pincode }}</div>
-                                    {% if s.delivery_address %}<div class="text-xs text-gray-500 mt-1">{{ s.delivery_address }}</div>{% endif %}
-                                </td>
-                            </tr>
+
+                            {% if storage_users %}
+                            <div class="flex w-full flex-col gap-2 sm:flex-row">
+                                <select id="storage_{{ s.shipment_id }}"
+                                    aria-label="Storage facility for {{ s.shipment_id }}"
+                                    class="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-blue-500">
+                                    {% for st in storage_users %}
+                                    <option value="{{ st.user_id }}">{{ st.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" onclick="assignStorage('{{ s.shipment_id }}')"
+                                    class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 transition hover:bg-blue-100">
+                                    Assign storage
+                                </button>
+                            </div>
                             {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if s.transporter_name %}
+                        <div class="mt-4 grid gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-2">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500">Transporter</p>
+                                <p class="mt-1 break-words text-sm font-semibold text-slate-800">{{ s.transporter_name
+                                    }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-slate-500">Vehicle number</p>
+                                <p class="mt-1 break-words text-sm font-semibold text-slate-800">{{ s.vehicle_number or
+                                    'Not provided' }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-slate-500">Driver</p>
+                                <p class="mt-1 break-words text-sm font-semibold text-slate-800">{{ s.driver_name or
+                                    'Not provided' }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-slate-500">Driver contact</p>
+                                <p class="mt-1 break-words text-sm font-semibold text-slate-800">{{ s.driver_phone or
+                                    'Not provided' }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
             {% else %}
-                <div class="text-center py-12">
-                    <p class="text-gray-500 text-lg">No shipments assigned yet.</p>
+            <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-7 w-7" aria-hidden="true">
+                        <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                            stroke-linejoin="round" />
+                        <path d="m3.5 7.7 8.5 4.6 8.5-4.6M12 21v-8.7" stroke="currentColor" stroke-width="1.7" />
+                    </svg>
                 </div>
+                <h3 class="mt-5 text-lg font-bold text-[#142B4A]">No shipments assigned yet</h3>
+                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                    Shipments assigned to your distributor account will appear here. Once available, you can verify
+                    their QR codes and record receipt.
+                </p>
+            </div>
             {% endif %}
-        </div>
+        </section>
+
+        <footer class="mt-10 border-t border-slate-200 py-6 text-center text-xs leading-6 text-slate-500">
+            <p>TradeSetu · Supply chain transparency for Indian MSMEs</p>
+            <p>Created by Krish Gupta and Atharva Jagtap</p>
+        </footer>
     </div>
-</div>
+</main>
 
-<!-- Scanner Modal -->
-<div id="scannerModal"
-     class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-
-    <div id="reader" style="width:300px;"></div>
-
-    <button onclick="closeScanner()"
-        class="absolute top-5 right-5 text-white text-2xl">
-        ✕
-    </button>
-
+<!-- QR Scanner Modal -->
+<div id="scannerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4" role="dialog"
+    aria-modal="true" aria-label="Shipment QR scanner">
+    <div class="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+        <button type="button" onclick="closeScanner()" aria-label="Close QR scanner"
+            class="absolute right-4 top-4 rounded-lg px-2 py-1 text-2xl text-slate-500 hover:bg-slate-100">×</button>
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Shipment verification</p>
+        <h2 class="mt-2 text-2xl font-extrabold text-[#142B4A]">Scan shipment QR</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-500">Position the QR code inside the scanning area to verify
+            shipment integrity.</p>
+        <div id="reader" class="mx-auto mt-5 w-full max-w-xs overflow-hidden rounded-xl"></div>
+        <p class="mt-4 text-xs leading-5 text-slate-500">Camera access requires browser permission. Use localhost or
+            HTTPS.</p>
+        <button type="button" onclick="closeScanner()"
+            class="mt-5 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel
+            scan</button>
+    </div>
 </div>
 
 <!-- Transport Modal -->
 <div id="transportModal"
-     class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-
-    <form method="POST" action="/add_transport"
-          class="bg-white p-6 rounded shadow-md flex flex-col gap-3">
-
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-slate-950/70 p-4" role="dialog"
+    aria-modal="true" aria-labelledby="transportModalTitle">
+    <form method="POST" action="{{ url_for('add_transport') }}"
+        class="my-auto w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" id="transport_shipment_id" name="shipment_id">
 
-        <input type="text" id="transporter_name" name="transporter_name" placeholder="Transporter Name" required
-               class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Shipment logistics</p>
+        <h2 id="transportModalTitle" class="mt-2 text-2xl font-extrabold text-[#142B4A]">Transport details</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-500">Record the transporter, vehicle and driver information.</p>
 
-        <input type="text" id="vehicle_number" name="vehicle_number" placeholder="Vehicle Number" required
-               class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="mt-6 grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <label for="transporter_name" class="mb-1.5 block text-sm font-semibold text-slate-700">Transporter
+                    name</label>
+                <input type="text" id="transporter_name" name="transporter_name" placeholder="e.g. ABC Logistics"
+                    required
+                    class="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            </div>
+            <div>
+                <label for="vehicle_number" class="mb-1.5 block text-sm font-semibold text-slate-700">Vehicle
+                    number</label>
+                <input type="text" id="vehicle_number" name="vehicle_number" placeholder="e.g. MH12AB1234" required
+                    class="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            </div>
+            <div>
+                <label for="driver_name" class="mb-1.5 block text-sm font-semibold text-slate-700">Driver name</label>
+                <input type="text" id="driver_name" name="driver_name" placeholder="Full name" required
+                    class="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            </div>
+            <div class="sm:col-span-2">
+                <label for="driver_phone" class="mb-1.5 block text-sm font-semibold text-slate-700">Driver phone</label>
+                <input type="tel" id="driver_phone" name="driver_phone" placeholder="Contact number" required
+                    class="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            </div>
+        </div>
 
-        <input type="text" id="driver_name" name="driver_name" placeholder="Driver Name" required
-               class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-
-        <input type="text" id="driver_phone" name="driver_phone" placeholder="Driver Phone" required
-               class="border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-
-        <div class="flex gap-2 mt-3">
-            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-200">
-                Save
-            </button>
-
+        <div class="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button type="button" onclick="closeTransportForm()"
-                class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition duration-200">
-                Cancel
-            </button>
+                class="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+            <button type="submit"
+                class="rounded-xl bg-[#142B4A] px-5 py-3 text-sm font-bold text-white hover:bg-blue-900">Save transport
+                details</button>
         </div>
     </form>
-
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
     let html5QrCode = null;
     let scanning = false;
-    let activeShipment = null;
 
     function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
     }
 
     function startScan(shipmentId) {
         if (scanning) return;
 
-        scanning = true;
-        activeShipment = shipmentId;
-
-        const modal = document.getElementById("scannerModal");
-        modal.classList.remove("hidden");
-
-        setTimeout(() => {
-            html5QrCode = new Html5Qrcode("reader");
-
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length) {
-                    let cameraId = devices[0].id;
-
-                    html5QrCode.start(
-                        cameraId,
-                        {
-                            fps: 10,
-                            qrbox: { width: 250, height: 250 },
-                            aspectRatio: 1.0
-                        },
-                        (decodedText) => {
-                            // 1. DEBUG RAW QR DATA (FRONTEND)
-                            // console.log("RAW QR:", decodedText);
-
-                            // 2. CLEAN QR DATA (FRONTEND)
-                            let cleanQR = decodedText.trim();
-
-                            // REMOVE NEWLINES
-                            cleanQR = cleanQR.replace(/\n/g, "").replace(/\r/g, "");
-
-                            // 3. VALIDATE FORMAT
-                            if (!cleanQR.includes("|")) {
-                                alert("Invalid QR format");
-                                return;
-                            }
-
-                            // 4. SPLIT SAFELY
-                            let parts = cleanQR.split("|");
-                            if (parts.length !== 2) {
-                                alert("Malformed QR");
-                                return;
-                            }
-
-                            let qrShipmentId = parts[0].trim();
-                            let qrHash = parts[1].trim();
-
-                            if (qrShipmentId !== shipmentId) {
-                                alert("Wrong QR scanned");
-                                return;
-                            }
-
-                            html5QrCode.stop().then(() => {
-                                scanning = false;
-                            });
-
-                            // 5. SEND CLEAN DATA TO BACKEND
-                            // console.log("SENDING TO BACKEND:", { shipment_id: qrShipmentId, qr_hash: qrHash });
-                            fetch("/verify_hash", {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "X-CSRFToken": getCsrfToken()
-                                },
-                                body: JSON.stringify({
-                                    shipment_id: qrShipmentId,
-                                    qr_hash: qrHash
-                                })
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                if (data.status !== "valid") {
-                                    alert("Tampered Data Detected");
-                                    modal.classList.add("hidden");
-                                    return;
-                                }
-
-                                document.getElementById("qty_" + shipmentId).disabled = false;
-                                document.getElementById("qty_" + shipmentId).classList.remove("bg-gray-200");
-                                document.getElementById("confirm_" + shipmentId).disabled = false;
-
-                                alert("QR Verified. Enter quantity.");
-                                modal.classList.add("hidden");
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert("Verification failed");
-                                modal.classList.add("hidden");
-                            });
-                        },
-                        (errorMessage) => {
-                            // ignore scan errors
-                        }
-                    ).catch(err => {
-                        console.error('Start scan error:', err);
-                        alert("Camera failed to start");
-                        scanning = false;
-                        modal.classList.add("hidden");
-                    });
-
-                } else {
-                    alert("No camera found");
-                    scanning = false;
-                    modal.classList.add("hidden");
-                }
-
-            }).catch(err => {
-                console.error(err);
-                alert("Camera access denied or not available");
-                scanning = false;
-                modal.classList.add("hidden");
-            });
-
-        }, 500);
-    }
-
-    function closeScanner() {
-        if (html5QrCode) {
-            html5QrCode.stop().catch(() => {});
-            html5QrCode = null;
-        }
-
-        scanning = false;
-        document.getElementById("scannerModal").classList.add("hidden");
-    }
-
-    function submitQuantity(shipmentId) {
-        let qty = document.getElementById("qty_" + shipmentId).value;
-
-        if (!qty) {
-            alert("Enter quantity");
+        if (typeof Html5Qrcode === 'undefined') {
+            alert('The QR scanner library could not load. Check your internet connection and reload.');
             return;
         }
 
-        fetch("/verify_quantity", {
-            method: "POST",
+        scanning = true;
+        const modal = document.getElementById('scannerModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        setTimeout(() => {
+            html5QrCode = new Html5Qrcode('reader');
+
+            Html5Qrcode.getCameras().then(devices => {
+                if (!devices || !devices.length) {
+                    alert('No camera found.');
+                    closeScanner();
+                    return;
+                }
+
+                return html5QrCode.start(
+                    devices[0].id,
+                    { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
+                    decodedText => {
+                        const parts = decodedText.trim().replace(/\n/g, '').replace(/\r/g, '').split('|');
+
+                        if (parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) {
+                            alert('Invalid QR format.');
+                            return;
+                        }
+
+                        const qrShipmentId = parts[0].trim();
+                        const qrHash = parts[1].trim();
+
+                        if (qrShipmentId !== shipmentId) {
+                            alert('This QR code belongs to a different shipment.');
+                            return;
+                        }
+
+                        html5QrCode.stop().catch(() => { }).finally(() => {
+                            scanning = false;
+
+                            fetch('/verify_hash', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': getCsrfToken()
+                                },
+                                body: JSON.stringify({ shipment_id: qrShipmentId, qr_hash: qrHash })
+                            })
+                                .then(async res => {
+                                    const data = await res.json();
+                                    if (!res.ok) throw new Error(data.message || 'Verification request failed.');
+                                    return data;
+                                })
+                                .then(data => {
+                                    if (data.status !== 'valid') {
+                                        alert(data.message || 'Integrity verification failed. Do not confirm this shipment.');
+                                        closeScanner();
+                                        return;
+                                    }
+
+                                    const qtyInput = document.getElementById('qty_' + shipmentId);
+                                    const confirmButton = document.getElementById('confirm_' + shipmentId);
+                                    qtyInput.disabled = false;
+                                    qtyInput.classList.remove('bg-slate-100');
+                                    qtyInput.classList.add('bg-white');
+                                    confirmButton.disabled = false;
+
+                                    alert('QR verified. Enter the actual received quantity.');
+                                    closeScanner();
+                                })
+                                .catch(error => {
+                                    console.error('QR verification error:', error);
+                                    alert(error.message || 'QR verification failed.');
+                                    closeScanner();
+                                });
+                        });
+                    },
+                    () => { }
+                ).catch(error => {
+                    console.error('Camera start error:', error);
+                    alert('Could not start the camera. Check browser camera permissions.');
+                    closeScanner();
+                });
+            }).catch(error => {
+                console.error('Camera access error:', error);
+                alert('Camera access was denied or is unavailable.');
+                closeScanner();
+            });
+        }, 250);
+    }
+
+    function closeScanner() {
+        const modal = document.getElementById('scannerModal');
+
+        if (html5QrCode && scanning) {
+            const scanner = html5QrCode;
+            html5QrCode = null;
+            scanning = false;
+            scanner.stop().catch(() => { });
+        } else {
+            html5QrCode = null;
+            scanning = false;
+        }
+
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function submitQuantity(shipmentId) {
+        const input = document.getElementById('qty_' + shipmentId);
+        const qty = input.value.trim();
+
+        if (qty === '' || !Number.isInteger(Number(qty)) || Number(qty) < 0) {
+            alert('Enter a valid received quantity (zero or greater).');
+            input.focus();
+            return;
+        }
+
+        const button = document.getElementById('confirm_' + shipmentId);
+        button.disabled = true;
+
+        fetch('/verify_quantity', {
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCsrfToken()
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
             },
-            body: JSON.stringify({
-                shipment_id: shipmentId,
-                received_qty: qty
+            body: JSON.stringify({ shipment_id: shipmentId, received_qty: qty })
+        })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Quantity confirmation failed.');
+                return data;
             })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.message);
-            location.reload();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Verification failed");
-        });
+            .then(data => {
+                alert(data.message || 'Quantity submitted.');
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Quantity submission error:', error);
+                alert(error.message || 'Quantity verification failed.');
+                button.disabled = false;
+            });
     }
 
     function openTransportForm(id, tname, vehicle, driver, phone) {
-        document.getElementById("transport_shipment_id").value = id;
-        document.getElementById("transporter_name").value = tname || "";
-        document.getElementById("vehicle_number").value = vehicle || "";
-        document.getElementById("driver_name").value = driver || "";
-        document.getElementById("driver_phone").value = phone || "";
-        document.getElementById("transportModal").classList.remove("hidden");
+        document.getElementById('transport_shipment_id').value = id;
+        document.getElementById('transporter_name').value = tname || '';
+        document.getElementById('vehicle_number').value = vehicle || '';
+        document.getElementById('driver_name').value = driver || '';
+        document.getElementById('driver_phone').value = phone || '';
+
+        const modal = document.getElementById('transportModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     }
 
     function closeTransportForm() {
-        document.getElementById("transportModal").classList.add("hidden");
+        const modal = document.getElementById('transportModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
     }
 
     function assignStorage(shipmentId) {
-        let storageId = document.getElementById("storage_" + shipmentId).value;
+        const select = document.getElementById('storage_' + shipmentId);
+        if (!select || !select.value) {
+            alert('Select a storage facility first.');
+            return;
+        }
 
-        fetch("/assign_storage", {
-            method: "POST",
+        const button = Array.from(document.querySelectorAll('button')).find(
+            item => item.getAttribute('onclick') === `assignStorage('${shipmentId}')`
+        );
+        if (button) button.disabled = true;
+
+        fetch('/assign_storage', {
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCsrfToken()
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
             },
-            body: JSON.stringify({
-                shipment_id: shipmentId,
-                storage_id: storageId
+            body: JSON.stringify({ shipment_id: shipmentId, storage_id: select.value })
+        })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Storage assignment failed.');
+                return data;
             })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert("Storage Assigned Successfully");
-            location.reload();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Storage assignment failed");
-        });
+            .then(data => {
+                alert(data.message || 'Storage assignment request completed.');
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Storage assignment error:', error);
+                alert(error.message || 'Storage assignment failed.');
+                if (button) button.disabled = false;
+            });
     }
-</script>
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            closeScanner();
+            closeTransportForm();
+        }
+    });
 </script>
 {% endblock %}

@@ -1,188 +1,522 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="relative min-h-screen">
+<main class="min-h-screen bg-[#F5F7FA] text-slate-900">
+    <div class="grid min-h-screen lg:grid-cols-[0.8fr_1.2fr]">
 
-    <!-- ✅ Background Image -->
-    <div class="absolute inset-0">
-        <img src="{{ url_for('static', filename='images/bg.jpg') }}" 
-             class="w-full h-full object-cover blur-[2px] scale-105" />
+        <!-- Branding panel -->
+        <aside
+            class="relative hidden overflow-hidden bg-[#142B4A] p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
+            <div class="pointer-events-none absolute -right-24 top-20 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl">
+            </div>
+            <div class="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-sky-400/10 blur-3xl">
+            </div>
 
-        <!-- Gradient Overlay -->
-        <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
+            <a href="{{ url_for('index') }}" class="relative z-10 flex w-fit items-center gap-3">
+                <span class="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10">
+                    <svg viewBox="0 0 24 24" fill="none" class="h-7 w-7" aria-hidden="true">
+                        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
+                            stroke-linejoin="round" />
+                        <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" />
+                    </svg>
+                </span>
+                <span>
+                    <span class="block text-2xl font-extrabold tracking-tight">TradeSetu</span>
+                    <span class="block text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200">Supply chain
+                        visibility</span>
+                </span>
+            </a>
 
-        <!-- Optional brand tint -->
-        <div class="absolute inset-0 bg-blue-900/30"></div>
-    </div>
+            <div class="relative z-10 max-w-lg py-12">
+                <span
+                    class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-semibold text-blue-100">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                    Join the TradeSetu network
+                </span>
 
-    <!-- ✅ Content -->
-    <div class="relative z-10">
+                <h1 class="mt-7 text-4xl font-extrabold leading-tight tracking-tight xl:text-5xl">
+                    Build stronger connections across your
+                    <span class="text-blue-300">supply chain.</span>
+                </h1>
 
-        <!-- NAVBAR -->
-        <nav class="bg-black/40 backdrop-blur-md border-b border-white/20">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="flex items-center h-16">
-                    <a href="/" class="text-white hover:text-blue-400 transition font-medium">
-                        ← TradeSetu
-                    </a>
+                <p class="mt-6 leading-8 text-slate-300">
+                    Create your business account to manage shipment handoffs, follow delivery progress and verify
+                    shipment information.
+                </p>
+
+                <div class="mt-10 space-y-5">
+                    <div class="flex items-start gap-4">
+                        <span
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-200">01</span>
+                        <div>
+                            <p class="font-semibold">Create your account</p>
+                            <p class="mt-1 text-sm leading-6 text-slate-300">Set up your email and password.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <span
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-200">02</span>
+                        <div>
+                            <p class="font-semibold">Tell us about your business</p>
+                            <p class="mt-1 text-sm leading-6 text-slate-300">Add your contact and business details.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <span
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-200">03</span>
+                        <div>
+                            <p class="font-semibold">Choose your stakeholder role</p>
+                            <p class="mt-1 text-sm leading-6 text-slate-300">Set up your place in the shipment workflow.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </nav>
 
-        <!-- REGISTER SECTION -->
-        <div class="min-h-screen flex items-center justify-center px-6 py-8">
-            <div class="w-full max-w-2xl">
+            <div class="relative z-10 border-t border-white/15 pt-6">
+                <p class="text-sm font-medium text-slate-300">Connecting trade. Building trust.</p>
+                <p class="mt-2 text-xs text-slate-400">TradeSetu</p>
+                <p class="mt-2 text-xs text-slate-400">Developed by Krish Gupta and Atharva Jagtap
+                </p>
+            </div>
+        </aside>
 
-                <!-- ✅ KEEP ORIGINAL FORM CARD -->
-                <div class="bg-white p-8 rounded-xl shadow-xl border border-gray-200">
+        <!-- Registration form -->
+        <section class="flex min-h-screen flex-col">
+            <header class="flex items-center justify-between gap-4 px-5 py-5 sm:px-8 lg:px-10">
+                <a href="{{ url_for('index') }}"
+                    class="text-sm font-semibold text-slate-600 transition hover:text-blue-700">
+                    <span aria-hidden="true">←</span> <span class="hidden sm:inline">Back to home</span><span
+                        class="sm:hidden">Home</span>
+                </a>
+                <p class="text-sm text-slate-500">
+                    Already registered?
+                    <a href="{{ url_for('login') }}" class="font-bold text-blue-700 hover:text-blue-800"> Sign in</a>
+                </p>
+            </header>
 
-                    <!-- Branding Header -->
-                    <div class="text-center mb-8">
-                        <h1 class="text-3xl font-bold text-gray-900 mb-2">
-                            TradeSetu
-                        </h1>
-                        <p class="text-gray-600 text-sm">Connecting Trade. Securing Growth.</p>
+            <div class="flex flex-1 items-center justify-center px-5 py-8 sm:px-10">
+                <div class="w-full max-w-2xl">
+
+                    <div class="mb-8">
+                        <div
+                            class="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#142B4A] text-white shadow-lg shadow-blue-950/10 lg:hidden">
+                            <span class="text-lg font-extrabold">T</span>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Business onboarding</p>
+                        <h2 class="mt-3 text-3xl font-extrabold tracking-tight text-[#142B4A] sm:text-4xl">Create your
+                            account</h2>
+                        <p class="mt-3 text-sm leading-6 text-slate-500">Complete these three steps to register your
+                            business with TradeSetu.</p>
                     </div>
 
-                    <!-- Step Indicator -->
-                    <div class="flex justify-center mb-8">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex items-center">
-                                <div id="step-1-indicator" class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm">1</div>
-                                <span class="ml-2 text-sm text-gray-600">Account</span>
-                            </div>
-                            <div class="w-8 h-0.5 bg-gray-300"></div>
-                            <div class="flex items-center">
-                                <div id="step-2-indicator" class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 font-bold flex items-center justify-center text-sm">2</div>
-                                <span class="ml-2 text-sm text-gray-500">Personal</span>
-                            </div>
-                            <div class="w-8 h-0.5 bg-gray-300"></div>
-                            <div class="flex items-center">
-                                <div id="step-3-indicator" class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 font-bold flex items-center justify-center text-sm">3</div>
-                                <span class="ml-2 text-sm text-gray-500">Business</span>
-                            </div>
+                    <!-- Step indicator -->
+                    <div class="mb-8 grid grid-cols-3 gap-3" aria-label="Registration progress">
+                        <div>
+                            <div id="step-1-bar" class="h-1.5 rounded-full bg-blue-600"></div>
+                            <p id="step-1-label" class="mt-3 text-xs font-bold text-blue-700 sm:text-sm">01 · Account
+                            </p>
+                        </div>
+                        <div>
+                            <div id="step-2-bar" class="h-1.5 rounded-full bg-slate-200"></div>
+                            <p id="step-2-label" class="mt-3 text-xs font-semibold text-slate-400 sm:text-sm">02 ·
+                                Personal</p>
+                        </div>
+                        <div>
+                            <div id="step-3-bar" class="h-1.5 rounded-full bg-slate-200"></div>
+                            <p id="step-3-label" class="mt-3 text-xs font-semibold text-slate-400 sm:text-sm">03 ·
+                                Business</p>
                         </div>
                     </div>
 
-                    <form id="registerForm" method="POST" class="space-y-6">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <form id="registerForm" method="POST"
+                        class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-                        <!-- STEP 1 -->
+                        <!-- Step 1 -->
                         <div id="step-1" class="step-content">
-                            <h3 class="text-xl font-semibold mb-6 text-center text-blue-600">Create Your Account</h3>
+                            <h3 class="text-xl font-bold text-[#142B4A]">Account credentials</h3>
+                            <p class="mt-2 text-sm leading-6 text-slate-500">Use an email address you can access and
+                                create a strong password.</p>
 
-                            <div class="space-y-4">
-                                <input type="email" name="email" id="email"
-                                    placeholder="Email Address"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                            <div class="mt-7 space-y-5">
+                                <div>
+                                    <label for="email" class="mb-2 block text-sm font-semibold text-slate-700">Email
+                                        address</label>
+                                    <input type="email" name="email" id="email" autocomplete="email"
+                                        placeholder="you@company.com" class="register-input" required
+                                        aria-describedby="email-error">
+                                    <p id="email-error" class="field-error" role="alert"></p>
+                                </div>
 
-                                <input type="password" name="password" id="password"
-                                    placeholder="Password"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                                <div>
+                                    <label for="password"
+                                        class="mb-2 block text-sm font-semibold text-slate-700">Password</label>
+                                    <div class="relative">
+                                        <input type="password" name="password" id="password" autocomplete="new-password"
+                                            placeholder="Create a password" class="register-input pr-24" required
+                                            aria-describedby="password-error">
+                                        <button type="button" class="password-toggle"
+                                            data-target="password">Show</button>
+                                    </div>
+                                    <p id="password-error" class="field-error" role="alert"></p>
+                                </div>
 
-                                <input type="password" name="confirm_password" id="confirm_password"
-                                    placeholder="Confirm Password"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
-
-                                <div id="email-error" class="text-red-500 text-sm hidden"></div>
-                                <div id="password-error" class="text-red-500 text-sm hidden"></div>
-                                <div id="confirm_password-error" class="text-red-500 text-sm hidden"></div>
+                                <div>
+                                    <label for="confirm_password"
+                                        class="mb-2 block text-sm font-semibold text-slate-700">Confirm password</label>
+                                    <div class="relative">
+                                        <input type="password" name="confirm_password" id="confirm_password"
+                                            autocomplete="new-password" placeholder="Enter your password again"
+                                            class="register-input pr-24" required
+                                            aria-describedby="confirm_password-error">
+                                        <button type="button" class="password-toggle"
+                                            data-target="confirm_password">Show</button>
+                                    </div>
+                                    <p id="confirm_password-error" class="field-error" role="alert"></p>
+                                </div>
                             </div>
 
-                            <button type="button" onclick="nextStep()"
-                                class="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold">
-                                Next Step
+                            <button type="button" onclick="nextStep()" class="primary-button mt-7">
+                                Continue to personal details <span aria-hidden="true">→</span>
                             </button>
                         </div>
 
-                        <!-- STEP 2 -->
+                        <!-- Step 2 -->
                         <div id="step-2" class="step-content hidden">
-                            <h3 class="text-xl font-semibold mb-6 text-center text-blue-600">Personal Information</h3>
+                            <h3 class="text-xl font-bold text-[#142B4A]">Personal information</h3>
+                            <p class="mt-2 text-sm leading-6 text-slate-500">Tell us who owns or represents this
+                                business.</p>
 
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <input type="text" name="owner_name" id="owner_name"
-                                    placeholder="Owner Name"
-                                    class="px-4 py-3 border border-gray-300 rounded-lg" required>
-
-                                <input type="text" name="business_name" id="business_name"
-                                    placeholder="Business Name"
-                                    class="px-4 py-3 border border-gray-300 rounded-lg" required>
+                            <div class="mt-7 grid gap-5 sm:grid-cols-2">
+                                <div>
+                                    <label for="owner_name"
+                                        class="mb-2 block text-sm font-semibold text-slate-700">Owner or representative
+                                        name</label>
+                                    <input type="text" name="owner_name" id="owner_name" autocomplete="name"
+                                        placeholder="Full name" class="register-input" required>
+                                </div>
+                                <div>
+                                    <label for="business_name"
+                                        class="mb-2 block text-sm font-semibold text-slate-700">Business name</label>
+                                    <input type="text" name="business_name" id="business_name"
+                                        autocomplete="organization" placeholder="Registered business name"
+                                        class="register-input" required>
+                                </div>
                             </div>
 
-                            <div class="flex gap-4 mt-6">
-                                <button type="button" onclick="prevStep()" class="flex-1 bg-gray-300 py-3 rounded-lg">
-                                    Previous
-                                </button>
-                                <button type="button" onclick="nextStep()" class="flex-1 bg-blue-600 text-white py-3 rounded-lg">
-                                    Next Step
-                                </button>
+                            <div id="step-2-error" class="field-error mt-3" role="alert"></div>
+
+                            <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row">
+                                <button type="button" onclick="prevStep()" class="secondary-button">← Back</button>
+                                <button type="button" onclick="nextStep()" class="primary-button">Continue to business
+                                    details →</button>
                             </div>
                         </div>
 
-                        <!-- STEP 3 -->
+                        <!-- Step 3 -->
                         <div id="step-3" class="step-content hidden">
-                            <h3 class="text-xl font-semibold mb-6 text-center text-blue-600">Business Details</h3>
+                            <h3 class="text-xl font-bold text-[#142B4A]">Business details</h3>
+                            <p class="mt-2 text-sm leading-6 text-slate-500">Complete your business profile and select
+                                your role in the supply chain.</p>
 
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <input type="text" name="location" id="location"
-                                    placeholder="Location"
-                                    class="px-4 py-3 border border-gray-300 rounded-lg" required>
+                            <div class="mt-7 space-y-5">
+                                <div>
+                                    <label for="location"
+                                        class="mb-2 block text-sm font-semibold text-slate-700">Business
+                                        location</label>
+                                    <input type="text" name="location" id="location" autocomplete="address-level2"
+                                        placeholder="City, state or business address" class="register-input" required>
+                                </div>
 
-                                <select name="stakeholder" id="stakeholder"
-                                    class="px-4 py-3 border border-gray-300 rounded-lg" required>
-                                    <option value="">Select Type</option>
-                                    <option value="Manufacturer">Manufacturer</option>
-                                    <option value="Distributor">Distributor</option>
-                                    <option value="Storage">Storage</option>
-                                    <option value="Retailer">Retailer</option>
-                                </select>
+                                <div>
+                                    <label for="stakeholder"
+                                        class="mb-2 block text-sm font-semibold text-slate-700">Stakeholder type</label>
+
+                                    <div class="relative">
+                                        <select name="stakeholder" id="stakeholder"
+                                            class="register-input appearance-none cursor-pointer pr-12" required>
+                                            <option value="" disabled selected>Select your business role</option>
+                                            <option value="Manufacturer">Manufacturer</option>
+                                            <option value="Distributor">Distributor</option>
+                                            <option value="Storage">Storage</option>
+                                            <option value="Retailer">Retailer</option>
+                                        </select>
+
+                                        <svg class="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            aria-hidden="true">
+                                            <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+
+                                    <p class="mt-2 text-xs leading-5 text-slate-500">Choose the role that best describes
+                                        your business operations.</p>
+                                </div>
+
+                                <div>
+                                    <label for="pan_tan_id"
+                                        class="mb-2 block text-sm font-semibold text-slate-700">PAN/TAN ID</label>
+                                    <input type="text" name="pan_tan_id" id="pan_tan_id" autocomplete="off"
+                                        placeholder="Enter your PAN or TAN identifier" class="register-input" required>
+                                </div>
                             </div>
 
-                            <input type="text" name="pan_tan_id" id="pan_tan_id"
-                                placeholder="PAN/TAN ID"
-                                class="w-full mt-4 px-4 py-3 border border-gray-300 rounded-lg" required>
+                            <div id="step-3-error" class="field-error mt-3" role="alert"></div>
 
-                            <div class="flex gap-4 mt-6">
-                                <button type="button" onclick="prevStep()" class="flex-1 bg-gray-300 py-3 rounded-lg">
-                                    Previous
-                                </button>
-                                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg">
-                                    Register
-                                </button>
+                            <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row">
+                                <button type="button" onclick="prevStep()" class="secondary-button">← Back</button>
+                                <button type="submit" id="register-submit" class="primary-button">Create account <span
+                                        aria-hidden="true">→</span></button>
                             </div>
                         </div>
-
                     </form>
+
+
                 </div>
             </div>
-        </div>
+
+            <footer class="border-t border-slate-200 bg-white px-5 py-4 text-center">
+
+            </footer>
+        </section>
     </div>
-</div>
+</main>
 
-<!-- ✅ KEEP YOUR ORIGINAL SCRIPT (UNCHANGED) -->
+<style>
+    .register-input {
+        display: block;
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem;
+        background: #fff;
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+        color: #0f172a;
+        outline: none;
+        transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .register-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .register-input:hover {
+        border-color: #94a3b8;
+    }
+
+    .register-input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 4px rgb(37 99 235 / 10%);
+    }
+
+    .register-input[aria-invalid="true"] {
+        border-color: #dc2626;
+    }
+
+    .field-error {
+        color: #dc2626;
+        font-size: 0.8125rem;
+        line-height: 1.4;
+    }
+
+    .field-error:empty {
+        display: none;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #2563eb;
+    }
+
+    .primary-button {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border-radius: 0.75rem;
+        background: #2563eb;
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 8px 18px rgb(37 99 235 / 15%);
+        transition: background 150ms ease, transform 150ms ease;
+    }
+
+    .primary-button:hover {
+        background: #1d4ed8;
+    }
+
+    .primary-button:focus-visible,
+    .secondary-button:focus-visible,
+    .password-toggle:focus-visible {
+        outline: 3px solid rgb(37 99 235 / 35%);
+        outline-offset: 3px;
+    }
+
+    .secondary-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem;
+        background: white;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #334155;
+        transition: background 150ms ease;
+    }
+
+    .secondary-button:hover {
+        background: #f8fafc;
+    }
+
+    @media (min-width: 640px) {
+        .secondary-button {
+            width: auto;
+        }
+
+        .primary-button {
+            flex: 1;
+        }
+    }
+</style>
+
 <script>
-let currentStep = 1;
+    let currentStep = 1;
 
-function showStep(step) {
-    document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
-    document.getElementById('step-' + step).classList.remove('hidden');
-}
+    function showStep(step) {
+        currentStep = step;
 
-function nextStep() {
-    if (currentStep < 3) {
-        currentStep++;
-        showStep(currentStep);
+        document.querySelectorAll('.step-content').forEach(function (el) {
+            el.classList.add('hidden');
+        });
+
+        const activeStep = document.getElementById('step-' + step);
+        if (activeStep) activeStep.classList.remove('hidden');
+
+        for (let i = 1; i <= 3; i++) {
+            const bar = document.getElementById('step-' + i + '-bar');
+            const label = document.getElementById('step-' + i + '-label');
+
+            if (i <= step) {
+                bar.classList.remove('bg-slate-200');
+                bar.classList.add('bg-blue-600');
+                label.classList.remove('text-slate-400', 'font-semibold');
+                label.classList.add('text-blue-700', 'font-bold');
+            } else {
+                bar.classList.remove('bg-blue-600');
+                bar.classList.add('bg-slate-200');
+                label.classList.remove('text-blue-700', 'font-bold');
+                label.classList.add('text-slate-400', 'font-semibold');
+            }
+        }
+
+        const heading = activeStep ? activeStep.querySelector('h3') : null;
+        if (heading) heading.setAttribute('tabindex', '-1');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-}
 
-function prevStep() {
-    if (currentStep > 1) {
-        currentStep--;
-        showStep(currentStep);
+    function clearFieldError(input) {
+        if (!input) return;
+        input.removeAttribute('aria-invalid');
+
+        const error = document.getElementById(input.id + '-error');
+        if (error) error.textContent = '';
     }
-}
 
-document.addEventListener('DOMContentLoaded', () => showStep(1));
+    function setFieldError(input, message) {
+        if (!input) return;
+        input.setAttribute('aria-invalid', 'true');
+
+        const error = document.getElementById(input.id + '-error');
+        if (error) error.textContent = message;
+    }
+
+    function validateStep(step) {
+        const stepElement = document.getElementById('step-' + step);
+        const inputs = Array.from(stepElement.querySelectorAll('input, select'));
+        let valid = true;
+
+        inputs.forEach(function (input) {
+            clearFieldError(input);
+
+            if (!input.checkValidity() || !input.value.trim()) {
+                setFieldError(input, input.validity.typeMismatch
+                    ? 'Please enter a valid email address.'
+                    : 'This field is required.');
+                valid = false;
+            }
+        });
+
+        if (step === 1) {
+            const password = document.getElementById('password');
+            const confirmation = document.getElementById('confirm_password');
+
+            if (password.value.length < 8) {
+                setFieldError(password, 'Use at least 8 characters for your password.');
+                valid = false;
+            }
+
+            if (password.value !== confirmation.value) {
+                setFieldError(confirmation, 'The passwords do not match.');
+                valid = false;
+            }
+        }
+
+        if (!valid) {
+            const firstInvalid = stepElement.querySelector('[aria-invalid="true"]');
+            if (firstInvalid) firstInvalid.focus();
+        }
+
+        return valid;
+    }
+
+    function nextStep() {
+        if (validateStep(currentStep) && currentStep < 3) {
+            showStep(currentStep + 1);
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 1) showStep(currentStep - 1);
+    }
+
+    document.querySelectorAll('.password-toggle').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(button.dataset.target);
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            button.textContent = showing ? 'Show' : 'Hide';
+            button.setAttribute('aria-pressed', String(!showing));
+        });
+    });
+
+    document.querySelectorAll('#registerForm input, #registerForm select').forEach(function (input) {
+        input.addEventListener('input', function () {
+            clearFieldError(input);
+        });
+        input.addEventListener('change', function () {
+            clearFieldError(input);
+        });
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', function (event) {
+        if (!validateStep(3)) {
+            event.preventDefault();
+        }
+    });
+
+    showStep(1);
 </script>
-
 {% endblock %}

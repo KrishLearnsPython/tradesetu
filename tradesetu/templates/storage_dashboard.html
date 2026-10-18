@@ -407,6 +407,10 @@
         <h2 class="mt-2 text-2xl font-extrabold text-[#142B4A]">Scan shipment QR</h2>
         <p class="mt-2 text-sm leading-6 text-slate-500">Position the shipment QR code inside the scanning area.</p>
         <div id="reader" class="mx-auto mt-5 w-full max-w-xs overflow-hidden rounded-xl"></div>
+        <button id="storage-switch-camera" type="button" onclick="switchStorageCamera()"
+            class="w-full mt-3 rounded-xl px-4 py-3 font-semibold" style="background:#DBEAFE;color:#1D4ED8" hidden>
+            Switch camera
+        </button>
         <p class="mt-4 text-xs leading-5 text-slate-500">Camera access requires browser permission. Use localhost or
             HTTPS.</p>
         <button type="button" onclick="closeScanner()"
@@ -417,132 +421,177 @@
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
+
     let html5QrCode = null;
     let scanning = false;
+    let storageCameras = [];
+    let storageCameraIndex = 0;
+    let storageShipmentId = null;
+    let storageScanStarting = false;
+    let storageScanHandled = false;
 
     function getCsrfToken() {
         const meta = document.querySelector('meta[name="csrf-token"]');
         return meta ? meta.getAttribute('content') : '';
     }
 
-    function startScan(shipmentId) {
-        if (scanning) return;
+    async function startScan(shipmentId) {
+        if (storageScanStarting || scanning) return;
 
         if (typeof Html5Qrcode === 'undefined') {
             alert('The QR scanner library could not load. Check your internet connection and reload.');
             return;
         }
 
-        scanning = true;
+        storageScanStarting = true;
+        storageShipmentId = shipmentId;
+        storageScanHandled = false;
+
         const modal = document.getElementById('scannerModal');
+        const switchButton = document.getElementById('storage-switch-camera');
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        switchButton.hidden = true;
 
-        setTimeout(() => {
+        try {
             html5QrCode = new Html5Qrcode('reader');
 
-            Html5Qrcode.getCameras().then(devices => {
-                if (!devices || !devices.length) {
-                    alert('No camera found.');
-                    closeScanner();
-                    return;
-                }
+            storageCameras = await Html5Qrcode.getCameras();
 
-                const rearCamera = devices.find(device =>
-                    /back|rear|environment|traseira|trasera|arrière/i.test(device.label)
-                );
+            if (!storageCameras || storageCameras.length === 0) {
+                throw new Error('No camera found.');
+            }
 
-                const selectedCamera = rearCamera || devices[devices.length - 1];
+            const rearIndex = storageCameras.findIndex(camera =>
+                /back|rear|environment|traseira|trasera|arrière/i.test(camera.label)
+            );
 
-                return html5QrCode.start(
-                    selectedCamera.id,
-                    { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
-                    decodedText => {
-                        const parts = decodedText.trim().replace(/\n/g, '').replace(/\r/g, '').split('|');
+            storageCameraIndex = rearIndex >= 0 ? rearIndex : storageCameras.length - 1;
 
-                        if (parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) {
-                            alert('Invalid QR format.');
-                            return;
-                        }
+            await html5QrCode.start(
+                storageCameras[storageCameraIndex].id,
+                { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
+                handleStorageQrScan,
+                () => { }
+            );
 
-                        const qrShipmentId = parts[0].trim();
-                        const qrHash = parts[1].trim();
-
-                        if (qrShipmentId !== shipmentId) {
-                            alert('This QR code belongs to a different shipment.');
-                            return;
-                        }
-
-                        const scanner = html5QrCode;
-                        scanner.stop().catch(() => { }).finally(() => {
-                            scanning = false;
-
-                            fetch('/verify_hash', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': getCsrfToken()
-                                },
-                                body: JSON.stringify({ shipment_id: qrShipmentId, qr_hash: qrHash })
-                            })
-                                .then(async res => {
-                                    const data = await res.json();
-                                    if (!res.ok) throw new Error(data.message || 'Verification request failed.');
-                                    return data;
-                                })
-                                .then(data => {
-                                    if (data.status !== 'valid') {
-                                        alert(data.message || 'Integrity verification failed. Do not receive this shipment.');
-                                        closeScanner();
-                                        return;
-                                    }
-
-                                    const qtyInput = document.getElementById('qty_' + shipmentId);
-                                    const confirmButton = document.getElementById('confirm_' + shipmentId);
-                                    qtyInput.disabled = false;
-                                    qtyInput.classList.remove('bg-slate-100');
-                                    qtyInput.classList.add('bg-white');
-                                    confirmButton.disabled = false;
-
-                                    alert('QR verified. Enter the actual received quantity.');
-                                    closeScanner();
-                                })
-                                .catch(error => {
-                                    console.error('QR verification error:', error);
-                                    alert(error.message || 'QR verification failed.');
-                                    closeScanner();
-                                });
-                        });
-                    },
-                    () => { }
-                ).catch(error => {
-                    console.error('Camera start error:', error);
-                    alert('Could not start the camera. Check browser camera permissions.');
-                    closeScanner();
-                });
-            }).catch(error => {
-                console.error('Camera access error:', error);
-                alert('Camera access was denied or is unavailable.');
-                closeScanner();
-            });
-        }, 250);
+            scanning = true;
+            switchButton.hidden = storageCameras.length < 2;
+        } catch (error) {
+            console.error('Storage camera start failed:', error);
+            alert(error.message || 'Could not start the camera. Check browser permissions.');
+            await closeScanner();
+        } finally {
+            storageScanStarting = false;
+        }
     }
 
-    function closeScanner() {
-        const modal = document.getElementById('scannerModal');
+    async function switchStorageCamera() {
+        const button = document.getElementById('storage-switch-camera');
 
-        if (html5QrCode && scanning) {
-            const scanner = html5QrCode;
-            html5QrCode = null;
-            scanning = false;
-            scanner.stop().catch(() => { });
-        } else {
-            html5QrCode = null;
-            scanning = false;
+        if (!html5QrCode || !scanning || storageCameras.length < 2 || storageScanStarting) {
+            return;
         }
 
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
+        storageScanStarting = true;
+        button.disabled = true;
+
+        const nextIndex = (storageCameraIndex + 1) % storageCameras.length;
+
+        try {
+            await html5QrCode.stop();
+            scanning = false;
+            storageScanHandled = false;
+
+            await html5QrCode.start(
+                storageCameras[nextIndex].id,
+                { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
+                handleStorageQrScan,
+                () => { }
+            );
+
+            storageCameraIndex = nextIndex;
+            scanning = true;
+            button.hidden = storageCameras.length < 2;
+        } catch (error) {
+            console.error('Storage camera switch failed:', error);
+            scanning = false;
+            button.hidden = true;
+            alert('Could not switch cameras. Close the scanner and reopen it to try again.');
+        } finally {
+            storageScanStarting = false;
+            button.disabled = false;
+        }
+    }
+
+    async function handleStorageQrScan(decodedText) {
+        if (storageScanHandled || !storageShipmentId) return;
+
+        const parts = decodedText.trim().replace(/\r?\n/g, '').split('|');
+
+        if (parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) {
+            alert('Invalid QR format.');
+            return;
+        }
+
+        const qrShipmentId = parts[0].trim();
+        const qrHash = parts[1].trim();
+
+        if (qrShipmentId !== String(storageShipmentId)) {
+            alert('This QR code belongs to a different shipment.');
+            return;
+        }
+
+        storageScanHandled = true;
+
+        try {
+            if (html5QrCode && scanning) {
+                await html5QrCode.stop();
+            }
+            scanning = false;
+
+            const response = await fetch('/verify_hash', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    shipment_id: qrShipmentId,
+                    qr_hash: qrHash
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Verification request failed.');
+            }
+
+            if (data.status !== 'valid') {
+                throw new Error(data.message || 'Integrity verification failed. Do not receive this shipment.');
+            }
+
+            const qtyInput = document.getElementById('qty_' + storageShipmentId);
+            const confirmButton = document.getElementById('confirm_' + storageShipmentId);
+
+            if (!qtyInput || !confirmButton) {
+                throw new Error('Shipment quantity controls could not be found.');
+            }
+
+            qtyInput.disabled = false;
+            qtyInput.classList.remove('bg-slate-100');
+            qtyInput.classList.add('bg-white');
+            confirmButton.disabled = false;
+
+            alert('QR verified. Enter the actual received quantity.');
+            await closeScanner();
+        } catch (error) {
+            console.error('QR verification error:', error);
+            alert(error.message || 'QR verification failed.');
+            await closeScanner();
+        }
     }
 
     function openDeliveryForm(shipmentId) {
@@ -577,11 +626,18 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCsrfToken()
             },
-            body: JSON.stringify({ shipment_id: shipmentId, received_qty: qty })
+            body: JSON.stringify({
+                shipment_id: shipmentId,
+                received_qty: qty
+            })
         })
-            .then(async res => {
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message || 'Receipt confirmation failed.');
+            .then(async response => {
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Receipt confirmation failed.');
+                }
+
                 return data;
             })
             .then(data => {
@@ -595,11 +651,43 @@
             });
     }
 
+    async function closeScanner() {
+        const modal = document.getElementById('scannerModal');
+        const switchButton = document.getElementById('storage-switch-camera');
+        const scanner = html5QrCode;
+
+        html5QrCode = null;
+        scanning = false;
+        storageScanStarting = false;
+        storageCameras = [];
+        storageCameraIndex = 0;
+        storageShipmentId = null;
+        storageScanHandled = false;
+
+        if (scanner) {
+            try {
+                if (scanner.isScanning) await scanner.stop();
+            } catch (error) {
+                console.debug('Scanner stop:', error);
+            }
+
+            try {
+                scanner.clear();
+            } catch (_) { }
+        }
+
+        switchButton.hidden = true;
+        switchButton.disabled = false;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             closeScanner();
             closeDeliveryForm();
         }
     });
+
 </script>
 {% endblock %}

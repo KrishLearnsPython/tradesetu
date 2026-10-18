@@ -164,6 +164,10 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-3">
+                    <button id="switch-camera" type="button" class="ts-scan-secondary" hidden>
+                        Switch camera
+                    </button>
+
                     <button id="start-scan" type="button" class="ts-scan-btn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" aria-hidden="true">
@@ -257,6 +261,10 @@
     let html5QrcodeScanner = null;
     let scanInProgress = false;
     let scanHandled = false;
+    let availableCameras = [];
+    let currentCameraIndex = 0;
+
+    const switchCameraButton = document.getElementById('switch-camera');
 
     const startButton = document.getElementById('start-scan');
     const retryButton = document.getElementById('retry-scan');
@@ -288,12 +296,13 @@
         }
 
         scanInProgress = false;
+        switchCameraButton.hidden = true;
     }
 
     async function startScanner() {
         if (scanInProgress) return;
 
-        if (typeof Html5QrcodeScanner === 'undefined') {
+        if (typeof Html5Qrcode === 'undefined') {
             setScanStatus('The scanner library did not load. Check your internet connection and refresh the page.', 'error');
             return;
         }
@@ -308,28 +317,46 @@
         try {
             html5QrcodeScanner = new Html5Qrcode('reader');
 
-            const cameraConfig = { facingMode: 'environment' };
-            const scannerConfig = {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
-            };
+            availableCameras = await Html5Qrcode.getCameras();
+
+            if (!availableCameras || availableCameras.length === 0) {
+                throw new Error('No cameras were found.');
+            }
+
+            const rearCameraIndex = availableCameras.findIndex(camera =>
+                /back|rear|environment|traseira|trasera|arrière/i.test(camera.label)
+            );
+
+            currentCameraIndex = rearCameraIndex >= 0 ? rearCameraIndex : 0;
 
             await html5QrcodeScanner.start(
-                cameraConfig,
-                scannerConfig,
+                availableCameras[currentCameraIndex].id,
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                },
                 onScanSuccess,
                 onScanFailure
             );
 
             scanInProgress = true;
             startButton.textContent = 'Scanner active';
-            setScanStatus('Rear camera active. Point it at the complete shipment QR code.');
+            switchCameraButton.hidden = availableCameras.length < 2;
+            setScanStatus('Camera active. Point it at the complete shipment QR code.');
+            return;
+
+
         } catch (error) {
-            console.error(error);
+            console.error('Could not start scanner:', error);
+            scanInProgress = false;
+            switchCameraButton.hidden = true;
             startButton.disabled = false;
             startButton.textContent = 'Start scanning';
-            setScanStatus('Could not start the scanner. Check camera permissions and try again.', 'error');
+            setScanStatus(
+                'Could not start the scanner. Check camera permissions and try again.',
+                'error'
+            );
         }
     }
 
@@ -371,7 +398,51 @@
     }
 
     startButton.addEventListener('click', startScanner);
+    switchCameraButton.addEventListener('click', async function () {
+        if (!scanInProgress || !html5QrcodeScanner || availableCameras.length < 2) {
+            return;
+        }
 
+        const nextCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+        const nextCamera = availableCameras[nextCameraIndex];
+
+        switchCameraButton.disabled = true;
+        setScanStatus('Switching camera…');
+
+        try {
+            await stopScanner();
+
+            currentCameraIndex = nextCameraIndex;
+            scanHandled = false;
+
+            await html5QrcodeScanner.start(
+                nextCamera.id,
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                },
+                onScanSuccess,
+                onScanFailure
+            );
+
+            scanInProgress = true;
+            switchCameraButton.hidden = availableCameras.length < 2;
+            setScanStatus(`Camera switched to ${nextCamera.label || `Camera ${currentCameraIndex + 1}`}.`);
+        } catch (error) {
+            console.error('Camera switch failed:', error);
+            scanInProgress = false;
+            switchCameraButton.hidden = true;
+            startButton.disabled = false;
+            startButton.textContent = 'Start scanning';
+            setScanStatus(
+                'Could not switch cameras. Start scanning again and try another camera.',
+                'error'
+            );
+        } finally {
+            switchCameraButton.disabled = false;
+        }
+    });
     retryButton.addEventListener('click', async function () {
         await stopScanner();
         startButton.disabled = false;

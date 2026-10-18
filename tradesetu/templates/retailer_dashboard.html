@@ -427,6 +427,11 @@
                 aria-label="Close scanner">×</button>
         </div>
         <div id="reader" class="w-full overflow-hidden rounded-xl"></div>
+
+        <button id="retailer-switch-camera" type="button" onclick="switchRetailerCamera()" class="ts-btn w-full mt-3"
+            style="background:#DBEAFE;color:#1D4ED8" hidden>
+            Switch camera
+        </button>
         <p id="scannerStatus" class="text-sm ts-muted mt-3" aria-live="polite">Allow camera access when prompted.</p>
         <button type="button" onclick="closeScanner()" class="ts-btn w-full mt-4"
             style="background:#F1F5F9;color:#334155">Close scanner</button>
@@ -438,6 +443,61 @@
     let html5QrCode = null;
     let currentShipmentId = null;
     let scannerStarting = false;
+    let retailerCameras = [];
+    let retailerCameraIndex = 0;
+    let retailerScanActive = false;
+
+    async function switchRetailerCamera() {
+        const button = document.getElementById('retailer-switch-camera');
+        const status = document.getElementById('scannerStatus');
+
+        if (!html5QrCode || !retailerScanActive || retailerCameras.length < 2) {
+            return;
+        }
+
+        const nextIndex = (retailerCameraIndex + 1) % retailerCameras.length;
+        const nextCamera = retailerCameras[nextIndex];
+
+        button.disabled = true;
+        status.textContent = 'Switching camera…';
+
+        try {
+            await html5QrCode.stop();
+            retailerScanActive = false;
+
+            await html5QrCode.start(
+                nextCamera.id,
+                { fps: 10, qrbox: { width: 240, height: 240 } },
+                async decodedText => {
+                    if (!currentShipmentId) return;
+
+                    const [qrShipmentId, qrHash] = decodedText.split('|');
+
+                    if (qrShipmentId !== currentShipmentId || !qrHash) {
+                        status.textContent = 'This QR code does not match the selected shipment.';
+                        return;
+                    }
+
+                    status.textContent = 'QR captured. Verifying with the server…';
+                    await closeScanner();
+                    verifyQRHash(currentShipmentId, qrHash);
+                },
+                () => { }
+            );
+
+            retailerCameraIndex = nextIndex;
+            retailerScanActive = true;
+            button.hidden = retailerCameras.length < 2;
+            status.textContent = `Camera switched to ${nextCamera.label || `Camera ${nextIndex + 1}`}.`;
+        } catch (error) {
+            console.error('Retailer camera switch failed:', error);
+            retailerScanActive = false;
+            button.hidden = true;
+            status.textContent = 'Could not switch cameras. Close the scanner and try again.';
+        } finally {
+            button.disabled = false;
+        }
+    }
 
     function getCsrfToken() {
         const meta = document.querySelector('meta[name="csrf-token"]');
@@ -467,26 +527,26 @@
 
             html5QrCode = new Html5Qrcode('reader');
 
-            let cameraConfig = { facingMode: 'environment' };
+            retailerCameras = await Html5Qrcode.getCameras();
 
-            try {
-                const cameras = await Html5Qrcode.getCameras();
-                if (cameras && cameras.length > 0) {
-                    const rearCamera = cameras.find(camera =>
-                        /back|rear|environment|traseira|trasera|arrière/i.test(camera.label)
-                    );
-
-                    if (rearCamera) {
-                        cameraConfig = rearCamera.id;
-                    }
-                }
-            } catch (cameraError) {
-                console.warn('Could not enumerate cameras; using rear-facing camera constraint.', cameraError);
+            if (!retailerCameras || retailerCameras.length === 0) {
+                throw new Error('No cameras found.');
             }
+
+            const rearCameraIndex = retailerCameras.findIndex(camera =>
+                /back|rear|environment|traseira|trasera|arrière/i.test(camera.label)
+            );
+
+            retailerCameraIndex = rearCameraIndex >= 0 ? rearCameraIndex : 0;
+
+            const cameraConfig = retailerCameras[retailerCameraIndex].id;
+
+            document.getElementById('retailer-switch-camera').hidden =
+                retailerCameras.length < 2;
 
             await html5QrCode.start(
                 cameraConfig,
-                { fps: 10, qrbox: { width: 240, height: 240 }, rememberLastUsedCamera: true },
+                { fps: 10, qrbox: { width: 240, height: 240 } },
                 async decodedText => {
                     if (!currentShipmentId) return;
                     const [qrShipmentId, qrHash] = decodedText.split('|');
@@ -502,6 +562,7 @@
                 },
                 () => { }
             );
+            retailerScanActive = true;
             status.textContent = 'Camera ready. Point it at the shipment QR code.';
         } catch (error) {
             console.error('Unable to start QR scanner:', error);
@@ -513,16 +574,30 @@
 
     async function closeScanner() {
         const modal = document.getElementById('scannerModal');
+        const switchButton = document.getElementById('retailer-switch-camera');
+
         if (html5QrCode) {
+            const scanner = html5QrCode;
+
+            html5QrCode = null;
+            retailerScanActive = false;
+
             try {
-                const state = html5QrCode.getState();
-                if (state === 2) await html5QrCode.stop();
+                if (scanner.isScanning) {
+                    await scanner.stop();
+                }
             } catch (error) {
                 console.debug('Scanner stop:', error);
             }
-            try { html5QrCode.clear(); } catch (_) { }
-            html5QrCode = null;
+
+            try {
+                scanner.clear();
+            } catch (_) { }
         }
+
+        switchButton.hidden = true;
+        switchButton.disabled = false;
+
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }

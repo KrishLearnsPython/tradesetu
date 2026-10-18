@@ -467,14 +467,45 @@
                 /back|rear|environment|traseira|trasera|arrière/i.test(camera.label)
             );
 
-            storageCameraIndex = rearIndex >= 0 ? rearIndex : storageCameras.length - 1;
+            const cameraConfig = {
+                fps: 10,
+                qrbox: { width: 200, height: 200 },
+                aspectRatio: 1.0
+            };
 
-            await html5QrCode.start(
-                storageCameras[storageCameraIndex].id,
-                { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
-                handleStorageQrScan,
-                () => { }
-            );
+            if (rearIndex >= 0) {
+                storageCameraIndex = rearIndex;
+
+                await html5QrCode.start(
+                    storageCameras[storageCameraIndex].id,
+                    cameraConfig,
+                    handleStorageQrScan,
+                    () => { }
+                );
+            } else {
+                // Camera labels may be unavailable on mobile browsers.
+                try {
+                    await html5QrCode.start(
+                        { facingMode: 'environment' },
+                        cameraConfig,
+                        handleStorageQrScan,
+                        () => { }
+                    );
+
+                    // Track the selected camera for manual switching.
+                    storageCameraIndex = 0;
+                } catch (error) {
+                    // Fall back to an available camera.
+                    storageCameraIndex = 0;
+
+                    await html5QrCode.start(
+                        storageCameras[storageCameraIndex].id,
+                        cameraConfig,
+                        handleStorageQrScan,
+                        () => { }
+                    );
+                }
+            }
 
             scanning = true;
             switchButton.hidden = storageCameras.length < 2;

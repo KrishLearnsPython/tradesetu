@@ -433,116 +433,187 @@
         return meta ? meta.getAttribute('content') : '';
     }
 
-    function startScan(shipmentId) {
-        if (scanning) return;
+    
+function startScan(shipmentId) {
+    if (scanning) return;
 
-        if (typeof Html5Qrcode === 'undefined') {
-            alert('The QR scanner library could not load. Check your internet connection and reload.');
-            return;
-        }
+    if (typeof Html5Qrcode === 'undefined') {
+        alert('The QR scanner library could not load. Check your internet connection and reload.');
+        return;
+    }
 
-        scanning = true;
-        const modal = document.getElementById('scannerModal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+    scanning = true;
 
-        setTimeout(() => {
-            html5QrCode = new Html5Qrcode('reader');
+    const modal = document.getElementById('scannerModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 
-            Html5Qrcode.getCameras().then(devices => {
-                if (!devices || !devices.length) {
+    setTimeout(() => {
+        html5QrCode = new Html5Qrcode('reader');
+
+        const cameraConfig = {
+            fps: 10,
+            qrbox: { width: 220, height: 220 },
+            aspectRatio: 1.0
+        };
+
+        let verificationInProgress = false;
+
+        const onScanSuccess = decodedText => {
+            if (verificationInProgress) return;
+
+            const parts = decodedText.trim()
+                .replace(/\n/g, '')
+                .replace(/\r/g, '')
+                .split('|');
+
+            if (
+                parts.length !== 2 ||
+                !parts[0].trim() ||
+                !parts[1].trim()
+            ) {
+                alert('Invalid QR format.');
+                return;
+            }
+
+            const qrShipmentId = parts[0].trim();
+            const qrHash = parts[1].trim();
+
+            if (qrShipmentId !== shipmentId) {
+                alert('This QR code belongs to a different shipment.');
+                return;
+            }
+
+            verificationInProgress = true;
+
+            html5QrCode.stop().catch(() => {}).finally(() => {
+                scanning = false;
+
+                fetch('/verify_hash', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({
+                        shipment_id: qrShipmentId,
+                        qr_hash: qrHash
+                    })
+                })
+                    .then(async res => {
+                        const data = await res.json();
+
+                        if (!res.ok) {
+                            throw new Error(
+                                data.message ||
+                                'Verification request failed.'
+                            );
+                        }
+
+                        return data;
+                    })
+                    .then(data => {
+                        if (data.status !== 'valid') {
+                            alert(
+                                data.message ||
+                                'Integrity verification failed. Do not confirm this shipment.'
+                            );
+                            closeScanner();
+                            return;
+                        }
+
+                        const qtyInput = document.getElementById(
+                            'qty_' + shipmentId
+                        );
+
+                        const confirmButton = document.getElementById(
+                            'confirm_' + shipmentId
+                        );
+
+                        if (!qtyInput || !confirmButton) {
+                            throw new Error(
+                                'Shipment quantity controls could not be found.'
+                            );
+                        }
+
+                        qtyInput.disabled = false;
+                        qtyInput.classList.remove('bg-slate-100');
+                        qtyInput.classList.add('bg-white');
+                        confirmButton.disabled = false;
+
+                        const verificationStatus =
+                            document.getElementById(
+                                'verificationStatus_' + shipmentId
+                            );
+
+                        if (verificationStatus) {
+                            verificationStatus.textContent =
+                                'QR verified successfully. You can now enter the quantity.';
+                            verificationStatus.hidden = false;
+                        }
+
+                        closeScanner();
+                    })
+                    .catch(error => {
+                        console.error('QR verification error:', error);
+                        alert(
+                            error.message || 'QR verification failed.'
+                        );
+                        closeScanner();
+                    });
+            });
+        };
+
+        const onScanFailure = () => {};
+
+        const startWithCameraId = cameraId => html5QrCode.start(
+            cameraId,
+            cameraConfig,
+            onScanSuccess,
+            onScanFailure
+        );
+
+        Html5Qrcode.getCameras()
+            .then(devices => {
+                if (!devices || devices.length === 0) {
                     alert('No camera found.');
                     closeScanner();
                     return;
                 }
 
+                const rearCameraIndex = devices.findIndex(device =>
+                    /back|rear|environment|traseira|trasera|arrière/i.test(
+                        device.label
+                    )
+                );
+
+                if (rearCameraIndex >= 0) {
+                    return startWithCameraId(
+                        devices[rearCameraIndex].id
+                    );
+                }
+
+                // Ask the browser to select the rear-facing camera.
                 return html5QrCode.start(
-                    devices[0].id,
-                    { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
-                    decodedText => {
-                        const parts = decodedText.trim().replace(/\n/g, '').replace(/\r/g, '').split('|');
-
-                        if (parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) {
-                            alert('Invalid QR format.');
-                            return;
-                        }
-
-                        const qrShipmentId = parts[0].trim();
-                        const qrHash = parts[1].trim();
-
-                        if (qrShipmentId !== shipmentId) {
-                            alert('This QR code belongs to a different shipment.');
-                            return;
-                        }
-
-                        html5QrCode.stop().catch(() => { }).finally(() => {
-                            scanning = false;
-
-                            fetch('/verify_hash', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': getCsrfToken()
-                                },
-                                body: JSON.stringify({ shipment_id: qrShipmentId, qr_hash: qrHash })
-                            })
-                                .then(async res => {
-                                    const data = await res.json();
-                                    if (!res.ok) throw new Error(data.message || 'Verification request failed.');
-                                    return data;
-                                })
-                                .then(data => {
-                                    if (data.status !== 'valid') {
-                                        alert(data.message || 'Integrity verification failed. Do not confirm this shipment.');
-                                        closeScanner();
-                                        return;
-                                    }
-
-
-                                    const qtyInput = document.getElementById('qty_' + shipmentId);
-                                    const confirmButton = document.getElementById('confirm_' + shipmentId);
-
-                                    if (!qtyInput || !confirmButton) {
-                                        throw new Error('Shipment quantity controls could not be found.');
-                                    }
-
-                                    qtyInput.disabled = false;
-                                    qtyInput.classList.remove('bg-slate-100');
-                                    qtyInput.classList.add('bg-white');
-                                    confirmButton.disabled = false;
-
-                                    const verificationStatus =
-                                        document.getElementById('verificationStatus_' + shipmentId);
-
-                                    if (verificationStatus) {
-                                        verificationStatus.textContent =
-                                            'QR verified successfully. You can now enter the quantity.';
-                                        verificationStatus.hidden = false;
-                                    }
-
-                                    closeScanner();
-
-                                })
-                                .catch(error => {
-                                    console.error('QR verification error:', error);
-                                    alert(error.message || 'QR verification failed.');
-                                    closeScanner();
-                                });
-                        });
-                    },
-                    () => { }
-                ).catch(error => {
-                    console.error('Camera start error:', error);
-                    alert('Could not start the camera. Check browser camera permissions.');
-                    closeScanner();
+                    { facingMode: 'environment' },
+                    cameraConfig,
+                    onScanSuccess,
+                    onScanFailure
+                ).catch(() => {
+                    // Fall back to an available camera if needed.
+                    return startWithCameraId(devices[0].id);
                 });
-            }).catch(error => {
-                console.error('Camera access error:', error);
-                alert('Camera access was denied or is unavailable.');
+            })
+            .catch(error => {
+                console.error('Camera start error:', error);
+                alert(
+                    'Could not start the camera. Check browser camera permissions.'
+                );
                 closeScanner();
             });
-        }, 250);
-    }
+    }, 250);
+}
+
 
     function closeScanner() {
         const modal = document.getElementById('scannerModal');

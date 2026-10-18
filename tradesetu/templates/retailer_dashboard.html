@@ -504,25 +504,35 @@
         return meta ? meta.getAttribute('content') : '';
     }
 
+
     async function startScan(shipmentId) {
         currentShipmentId = shipmentId;
+
         const modal = document.getElementById('scannerModal');
         const status = document.getElementById('scannerStatus');
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         status.textContent = 'Starting camera…';
 
         if (typeof Html5Qrcode === 'undefined') {
-            status.textContent = 'QR scanner library did not load. Check your internet connection and reload the page.';
+            status.textContent =
+                'QR scanner library did not load. Check your internet connection and reload the page.';
             return;
         }
+
         if (scannerStarting) return;
         scannerStarting = true;
 
         try {
             if (html5QrCode) {
-                try { await html5QrCode.stop(); } catch (_) { }
-                try { html5QrCode.clear(); } catch (_) { }
+                try {
+                    await html5QrCode.stop();
+                } catch (_) { }
+
+                try {
+                    html5QrCode.clear();
+                } catch (_) { }
             }
 
             html5QrCode = new Html5Qrcode('reader');
@@ -534,39 +544,83 @@
             }
 
             const rearCameraIndex = retailerCameras.findIndex(camera =>
-                /back|rear|environment|traseira|trasera|arrière/i.test(camera.label)
+                /back|rear|environment|traseira|trasera|arrière/i.test(
+                    camera.label
+                )
             );
 
-            retailerCameraIndex = rearCameraIndex >= 0 ? rearCameraIndex : 0;
+            const cameraConfig = {
+                fps: 10,
+                qrbox: { width: 240, height: 240 }
+            };
 
-            const cameraConfig = retailerCameras[retailerCameraIndex].id;
+            const onScanSuccess = async decodedText => {
+                if (!currentShipmentId) return;
 
-            document.getElementById('retailer-switch-camera').hidden =
-                retailerCameras.length < 2;
+                const [qrShipmentId, qrHash] = decodedText.split('|');
 
-            await html5QrCode.start(
-                cameraConfig,
-                { fps: 10, qrbox: { width: 240, height: 240 } },
-                async decodedText => {
-                    if (!currentShipmentId) return;
-                    const [qrShipmentId, qrHash] = decodedText.split('|');
+                if (qrShipmentId !== currentShipmentId || !qrHash) {
+                    status.textContent =
+                        'This QR code does not match the selected shipment. Please scan the correct code.';
+                    return;
+                }
 
-                    if (qrShipmentId !== currentShipmentId || !qrHash) {
-                        status.textContent = 'This QR code does not match the selected shipment. Please scan the correct code.';
-                        return;
-                    }
+                status.textContent = 'QR captured. Verifying with the server…';
 
-                    status.textContent = 'QR captured. Verifying with the server…';
-                    await closeScanner();
-                    verifyQRHash(currentShipmentId, qrHash);
-                },
-                () => { }
+                await closeScanner();
+                verifyQRHash(currentShipmentId, qrHash);
+            };
+
+            const onScanFailure = () => { };
+
+            const switchButton = document.getElementById(
+                'retailer-switch-camera'
             );
+
+            switchButton.hidden = retailerCameras.length < 2;
+
+            if (rearCameraIndex >= 0) {
+                retailerCameraIndex = rearCameraIndex;
+
+                await html5QrCode.start(
+                    retailerCameras[retailerCameraIndex].id,
+                    cameraConfig,
+                    onScanSuccess,
+                    onScanFailure
+                );
+            } else {
+                // Camera labels may be unavailable on mobile browsers.
+                try {
+                    await html5QrCode.start(
+                        { facingMode: 'environment' },
+                        cameraConfig,
+                        onScanSuccess,
+                        onScanFailure
+                    );
+
+                    // Keep a valid index for the manual switch control.
+                    retailerCameraIndex = 0;
+                } catch (error) {
+                    // Fall back to the first available camera.
+                    retailerCameraIndex = 0;
+
+                    await html5QrCode.start(
+                        retailerCameras[retailerCameraIndex].id,
+                        cameraConfig,
+                        onScanSuccess,
+                        onScanFailure
+                    );
+                }
+            }
+
             retailerScanActive = true;
-            status.textContent = 'Camera ready. Point it at the shipment QR code.';
+            status.textContent =
+                'Camera ready. Point it at the shipment QR code.';
+
         } catch (error) {
             console.error('Unable to start QR scanner:', error);
-            status.textContent = 'Could not start the camera. Check browser camera permission and use HTTPS or localhost.';
+            status.textContent =
+                'Could not start the camera. Check browser camera permission and use HTTPS or localhost.';
         } finally {
             scannerStarting = false;
         }

@@ -13,13 +13,14 @@
             </div>
 
             <a href="{{ url_for('index') }}" class="relative z-10 flex w-fit items-center gap-3">
-                <span class="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10">
-                    <svg viewBox="0 0 24 24" fill="none" class="h-7 w-7" aria-hidden="true">
-                        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
-                            stroke-linejoin="round" />
-                        <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7"
-                            stroke-linecap="round" />
-                    </svg>
+                <img src="{{ url_for('static', filename='images/tradesetu-logo.png') }}" alt="TradeSetu logo"
+                    class="h-12 w-12 shrink-0 rounded-xl object-contain" width="40" height="40" />
+                <span>
+                    <span class="block text-2xl font-extrabold tracking-tight text-white">TradeSetu</span>
+                    <span class="block text-[10px] font-semibold uppercase tracking-[0.2em] text-blue-200">Supply chain
+                        visibility</span>
+                </span>
+                </svg>
                 </span>
                 <span>
                     <span class="block text-2xl font-extrabold tracking-tight">TradeSetu</span>

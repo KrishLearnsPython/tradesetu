@@ -343,8 +343,8 @@
                                 be enabled only after verification.</p>
                         </div>
                         <div class="flex flex-wrap gap-2">
-                            <button type="button" onclick="startScan({{ s.shipment_id|tojson }})"
-                                class="ts-btn ts-btn-primary">▦ Scan & verify</button>
+                            <button type="button" class="ts-btn ts-btn-primary retailer-scan-button"
+                                data-shipment-id="{{ s.shipment_id }}">▦ Scan & verify</button>
                             <button type="button" onclick="markDelivered({{ s.shipment_id|tojson }})"
                                 id="deliver_{{ s.shipment_id }}" disabled class="ts-btn ts-btn-success">✓ Mark
                                 delivered</button>
@@ -660,7 +660,11 @@
             button.textContent = '✓ Mark delivered';
         }
     }
-
+    document.querySelectorAll('.retailer-scan-button').forEach(button => {
+        button.addEventListener('click', () => {
+            startScan(button.dataset.shipmentId);
+        });
+    });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') closeScanner();
     });

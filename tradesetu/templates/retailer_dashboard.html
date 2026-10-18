@@ -466,8 +466,26 @@
             }
 
             html5QrCode = new Html5Qrcode('reader');
+
+            let cameraConfig = { facingMode: 'environment' };
+
+            try {
+                const cameras = await Html5Qrcode.getCameras();
+                if (cameras && cameras.length > 0) {
+                    const rearCamera = cameras.find(camera =>
+                        /back|rear|environment|traseira|trasera|arrière/i.test(camera.label)
+                    );
+
+                    if (rearCamera) {
+                        cameraConfig = rearCamera.id;
+                    }
+                }
+            } catch (cameraError) {
+                console.warn('Could not enumerate cameras; using rear-facing camera constraint.', cameraError);
+            }
+
             await html5QrCode.start(
-                { facingMode: 'environment' },
+                cameraConfig,
                 { fps: 10, qrbox: { width: 240, height: 240 }, rememberLastUsedCamera: true },
                 async decodedText => {
                     if (!currentShipmentId) return;

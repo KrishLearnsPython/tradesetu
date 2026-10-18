@@ -365,7 +365,7 @@ def distributor_dashboard():
 
     # Fetch shipments assigned to this distributor
     cursor.execute(
-        "SELECT * FROM shipments WHERE distributor_id = %s",
+        "SELECT * FROM shipments WHERE distributor_id = %s ORDER BY created_at DESC",
         (session['user_id'],)
     )
     shipments = cursor.fetchall()
@@ -393,7 +393,7 @@ def storage_dashboard():
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(
-        "SELECT * FROM shipments WHERE storage_id = %s",
+        "SELECT * FROM shipments WHERE storage_id = %s ORDER BY created_at DESC",
         (session['user_id'],)
     )
     shipments = cursor.fetchall()

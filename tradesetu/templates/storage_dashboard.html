@@ -448,8 +448,14 @@
                     return;
                 }
 
+                const rearCamera = devices.find(device =>
+                    /back|rear|environment|traseira|trasera|arrière/i.test(device.label)
+                );
+
+                const selectedCamera = rearCamera || devices[devices.length - 1];
+
                 return html5QrCode.start(
-                    devices[0].id,
+                    selectedCamera.id,
                     { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
                     decodedText => {
                         const parts = decodedText.trim().replace(/\n/g, '').replace(/\r/g, '').split('|');

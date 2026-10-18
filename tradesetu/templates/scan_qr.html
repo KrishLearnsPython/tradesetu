@@ -306,20 +306,25 @@
         setScanStatus('Starting scanner. Please allow camera access.');
 
         try {
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                'reader',
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    rememberLastUsedCamera: true
-                },
-                false
+            html5QrcodeScanner = new Html5Qrcode('reader');
+
+            const cameraConfig = { facingMode: 'environment' };
+            const scannerConfig = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+
+            await html5QrcodeScanner.start(
+                cameraConfig,
+                scannerConfig,
+                onScanSuccess,
+                onScanFailure
             );
 
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
             scanInProgress = true;
             startButton.textContent = 'Scanner active';
-            setScanStatus('Point your camera at the complete shipment QR code.');
+            setScanStatus('Rear camera active. Point it at the complete shipment QR code.');
         } catch (error) {
             console.error(error);
             startButton.disabled = false;

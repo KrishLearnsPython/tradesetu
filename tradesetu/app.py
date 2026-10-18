@@ -370,9 +370,16 @@ def distributor_dashboard():
     )
     shipments = cursor.fetchall()
 
-    # Fetch storage users
+    
+        # Fetch active storage users available for assignment
     cursor.execute(
-        "SELECT id as user_id, business_name as name FROM users WHERE stakeholder = 'storage'"
+        """
+        SELECT id AS user_id, business_name AS name
+        FROM users
+        WHERE LOWER(TRIM(stakeholder)) = 'storage'
+          AND is_active = TRUE
+        ORDER BY business_name
+        """
     )
     storage_users = cursor.fetchall()
 

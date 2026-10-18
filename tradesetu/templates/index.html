@@ -7,15 +7,8 @@
     <nav class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
         <div class="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 sm:px-8">
             <a href="{{ url_for('index') }}" class="flex items-center gap-3" aria-label="TradeSetu home">
-                <span
-                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#142B4A] text-white shadow-lg shadow-blue-950/10">
-                    <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7"
-                            stroke-linejoin="round" />
-                        <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7"
-                            stroke-linecap="round" />
-                    </svg>
-                </span>
+                <img src="{{ url_for('static', filename='images/tradesetu-logo.png') }}" alt="TradeSetu logo"
+                    class="h-12 w-12 shrink-0 rounded-xl object-contain" width="48" height="48" />
                 <span>
                     <span class="block text-xl font-extrabold tracking-tight text-[#142B4A]">TradeSetu</span>
                     <span
@@ -426,9 +419,10 @@
     <footer class="border-t border-slate-200 bg-white">
         <div class="mx-auto flex max-w-7xl flex-col items-center gap-5 px-5 py-8 text-center sm:px-8">
             <a href="{{ url_for('index') }}" class="flex items-center gap-3">
-                <span
-                    class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#142B4A] text-sm font-extrabold text-white">T</span>
+                <img src="{{ url_for('static', filename='images/tradesetu-logo.png') }}" alt="TradeSetu logo"
+                    class="h-10 w-10 shrink-0 rounded-lg object-contain" width="40" height="40" />
                 <span class="font-extrabold text-[#142B4A]">TradeSetu</span>
+
             </a>
 
             <p class="text-sm text-slate-600">

@@ -7,15 +7,13 @@
     <nav class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div class="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
             <a href="{{ url_for('index') }}" class="flex items-center gap-3">
-                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#142B4A] text-white">
-                    <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                        <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                        <path d="m8 10 4 2.3 4-2.3M12 12.3V17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                    </svg>
-                </span>
+                <img src="{{ url_for('static', filename='images/tradesetu-logo.png') }}" alt="TradeSetu logo"
+                    class="h-12 w-12 shrink-0 rounded-xl object-contain" width="40" height="40" />
                 <span>
                     <span class="block text-lg font-extrabold tracking-tight text-[#142B4A]">TradeSetu</span>
-                    <span class="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 sm:block">Supply chain visibility</span>
+                    <span
+                        class="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 sm:block">Supply
+                        chain visibility</span>
                 </span>
             </a>
 
@@ -24,12 +22,14 @@
                     <p class="text-sm font-semibold text-slate-800">{{ user.owner_name }}</p>
                     <p class="text-xs text-slate-500">{{ user.stakeholder }}</p>
                 </div>
-                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800" aria-hidden="true">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-800"
+                    aria-hidden="true">
                     {{ (user.owner_name or 'U')[:1]|upper }}
                 </div>
                 <form action="{{ url_for('logout') }}" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                    <button type="submit"
+                        class="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
                         Sign out
                     </button>
                 </form>
@@ -41,9 +41,11 @@
 
         <!-- Welcome -->
         <section class="relative overflow-hidden rounded-3xl bg-[#142B4A] px-6 py-8 text-white sm:px-10 sm:py-10">
-            <div class="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl"
+                aria-hidden="true"></div>
             <div class="relative z-10 max-w-3xl">
-                <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-100">
+                <span
+                    class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-100">
                     <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
                     Your TradeSetu workspace
                 </span>
@@ -51,7 +53,8 @@
                     Welcome back, {{ user.owner_name }}.
                 </h1>
                 <p class="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                    Your account is ready. Review your business profile and continue managing your supply chain activities through TradeSetu.
+                    Your account is ready. Review your business profile and continue managing your supply chain
+                    activities through TradeSetu.
                 </p>
             </div>
         </section>
@@ -60,7 +63,8 @@
         <section class="mb-6 mt-10">
             <p class="text-xs font-bold uppercase tracking-[0.18em] text-blue-700">Account overview</p>
             <h2 class="mt-2 text-2xl font-extrabold tracking-tight text-[#142B4A]">Your business profile</h2>
-            <p class="mt-2 text-sm leading-6 text-slate-500">The business details associated with your TradeSetu account.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-500">The business details associated with your TradeSetu
+                account.</p>
         </section>
 
         <!-- Profile cards -->
@@ -69,8 +73,9 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                     <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                        <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/>
-                        <path d="M4 21v-2a8 8 0 0 1 16 0v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7" />
+                        <path d="M4 21v-2a8 8 0 0 1 16 0v2" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" />
                     </svg>
                 </div>
                 <p class="mt-5 text-sm font-medium text-slate-500">Account holder</p>
@@ -81,7 +86,8 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
                     <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                        <path d="M3 21V8l9-5 9 5v13M8 21v-6h8v6M7 10h.01M12 10h.01M17 10h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3 21V8l9-5 9 5v13M8 21v-6h8v6M7 10h.01M12 10h.01M17 10h.01" stroke="currentColor"
+                            stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
                 <p class="mt-5 text-sm font-medium text-slate-500">Business name</p>
@@ -89,11 +95,13 @@
                 <p class="mt-2 text-sm text-slate-500">Registered business profile</p>
             </article>
 
-            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md md:col-span-2 xl:col-span-1">
+            <article
+                class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md md:col-span-2 xl:col-span-1">
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
                     <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                        <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                        <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/>
+                        <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor"
+                            stroke-width="1.7" stroke-linejoin="round" />
+                        <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7" />
                     </svg>
                 </div>
                 <p class="mt-5 text-sm font-medium text-slate-500">Business location</p>
@@ -107,10 +115,13 @@
 
             <article class="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
                 <div class="flex items-start gap-4">
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                    <div
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                         <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                            <path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                            <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 3 20 6v5c0 5-3.4 8.2-8 10-4.6-1.8-8-5-8-10V6l8-3Z" stroke="currentColor"
+                                stroke-width="1.7" stroke-linejoin="round" />
+                            <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                                stroke-linejoin="round" />
                         </svg>
                     </div>
                     <div class="min-w-0">
@@ -123,14 +134,16 @@
                 </div>
                 <div class="mt-6 rounded-xl border border-blue-100 bg-blue-50/70 p-4">
                     <p class="text-sm font-semibold text-blue-900">Keep your account details accurate</p>
-                    <p class="mt-1 text-sm leading-6 text-blue-800">Use the correct business information when coordinating shipments and handoffs.</p>
+                    <p class="mt-1 text-sm leading-6 text-blue-800">Use the correct business information when
+                        coordinating shipments and handoffs.</p>
                 </div>
             </article>
 
             <article class="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-[#142B4A]">
                     <svg viewBox="0 0 24 24" fill="none" class="h-6 w-6" aria-hidden="true">
-                        <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" />
                     </svg>
                 </div>
                 <h3 class="mt-5 text-lg font-bold text-[#142B4A]">Ready to get started?</h3>
@@ -138,13 +151,15 @@
                     Continue to your role-specific dashboard to access the available shipment tools.
                 </p>
                 <p class="mt-5 text-xs leading-5 text-slate-400">
-                    If you expected a different workspace, check that your account is registered with the correct stakeholder type.
+                    If you expected a different workspace, check that your account is registered with the correct
+                    stakeholder type.
                 </p>
             </article>
         </section>
 
         <footer class="mt-10 border-t border-slate-200 py-6 text-center">
-            <p class="text-xs text-slate-400">© 2026 TradeSetu · Created by Krish Gupta and Atharva Jagtap · MIT ADT University</p>
+            <p class="text-xs text-slate-400">© 2026 TradeSetu · Created by Krish Gupta and Atharva Jagtap · MIT ADT
+                University</p>
         </footer>
     </div>
 </main>

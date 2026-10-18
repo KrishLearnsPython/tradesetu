@@ -700,63 +700,73 @@ def add_transport():
     vehicle_number = request.form.get("vehicle_number")
     driver_name = request.form.get("driver_name")
     driver_phone = request.form.get("driver_phone")
+    storage_id_raw = request.form.get("storage_id")
 
-    if not all([shipment_id, transporter_name, vehicle_number, driver_name, driver_phone]):
-        flash('All fields are required')
+    if not all([shipment_id, transporter_name, vehicle_number, driver_name, driver_phone, storage_id_raw]):
+        flash('All transport and destination fields are required', 'error')
         return redirect(url_for('distributor_dashboard'))
 
-    # Verify shipment belongs to logged-in distributor and is IN_TRANSIT
+    try:
+        storage_id = int(storage_id_raw)
+        if storage_id <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        flash('Select a valid storage facility', 'error')
+        return redirect(url_for('distributor_dashboard'))
+
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM shipments WHERE shipment_id = %s AND distributor_id = %s", (shipment_id, session['user_id']))
-    shipment = cursor.fetchone()
+    try:
+        # Validate the destination before updating any shipment fields.
+        cursor.execute("""
+            SELECT id FROM users
+            WHERE id = %s
+              AND LOWER(TRIM(stakeholder)) = 'storage'
+              AND is_active = TRUE
+        """, (storage_id,))
+        if not cursor.fetchone():
+            connection.rollback()
+            flash('Selected storage facility is invalid or inactive', 'error')
+            return redirect(url_for('distributor_dashboard'))
 
-    if not shipment:
-        cursor.close()
-        connection.close()
-        flash('Shipment not found')
-        return redirect(url_for('distributor_dashboard'))
+        # Ownership, state, destination and transport are checked/saved together.
+        cursor.execute("""
+            UPDATE shipments
+            SET storage_id = %s,
+                transporter_name = %s,
+                vehicle_number = %s,
+                driver_name = %s,
+                driver_phone = %s,
+                dispatch_date = NOW()
+            WHERE shipment_id = %s
+              AND distributor_id = %s
+              AND status = 'IN_TRANSIT'
+        """, (storage_id, transporter_name, vehicle_number, driver_name,
+              driver_phone, shipment_id, session['user_id']))
 
-    if shipment['status'] != 'IN_TRANSIT':
-        cursor.close()
-        connection.close()
-        flash('Can only add transport details for IN_TRANSIT shipments')
-        return redirect(url_for('distributor_dashboard'))
+        if cursor.rowcount != 1:
+            connection.rollback()
+            flash('Shipment not found or no longer eligible for dispatch. Refresh and try again.', 'error')
+            return redirect(url_for('distributor_dashboard'))
 
-        # Update database only if ownership and status still match.
-    query = """
-    UPDATE shipments
-    SET transporter_name = %s,
-        vehicle_number = %s,
-        driver_name = %s,
-        driver_phone = %s,
-        dispatch_date = NOW()
-    WHERE shipment_id = %s
-      AND distributor_id = %s
-      AND status = 'IN_TRANSIT'
-    """
-
-    cursor.execute(query, (
-        transporter_name,
-        vehicle_number,
-        driver_name,
-        driver_phone,
-        shipment_id,
-        session['user_id']
-    ))
-
-    if cursor.rowcount != 1:
+        connection.commit()
+    except Exception:
         connection.rollback()
+        app.logger.exception('Unable to save shipment dispatch details')
+        flash('Unable to save dispatch details. Please try again.', 'error')
+        return redirect(url_for('distributor_dashboard'))
+    finally:
         cursor.close()
         connection.close()
-        flash('Shipment changed or could not be updated. Please refresh and try again.', 'error')
-        return redirect(url_for('distributor_dashboard'))
 
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    flash('Transport details added successfully')
+    log_audit_action(
+        shipment_id,
+        "DISPATCH_DETAILS_SAVED",
+        "Destination storage and transport details saved together",
+        session['user_id'],
+        'distributor'
+    )
+    flash('Destination storage and transport details saved successfully', 'success')
     return redirect(url_for('distributor_dashboard'))
 
 

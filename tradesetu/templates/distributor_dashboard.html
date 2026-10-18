@@ -232,9 +232,15 @@
                     <div class="p-5 sm:p-6">
                         <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
                             <div>
+
                                 <label for="qty_{{ s.shipment_id }}"
-                                    class="mb-2 block text-sm font-semibold text-slate-700">Actual quantity
-                                    received</label>
+                                    class="mb-2 block text-sm font-semibold text-slate-700">
+                                    Actual quantity received
+                                </label>
+
+                                <p id="verificationStatus_{{ s.shipment_id }}" role="status" aria-live="polite"
+                                    class="mb-2 text-sm font-semibold text-emerald-700" hidden></p>
+
                                 <input type="number" id="qty_{{ s.shipment_id }}" min="0" step="1" disabled
                                     placeholder="Enter received quantity"
                                     class="w-full rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed sm:max-w-xs"
@@ -267,32 +273,18 @@
                             {% if s.status == 'IN_TRANSIT' %}
                             {% if s.transporter_name %}
                             <button type="button"
-                                onclick="openTransportForm('{{ s.shipment_id }}', '{{ s.transporter_name }}', '{{ s.vehicle_number }}', '{{ s.driver_name }}', '{{ s.driver_phone }}')"
+                                onclick="openTransportForm('{{ s.shipment_id }}', '{{ s.transporter_name }}', '{{ s.vehicle_number }}', '{{ s.driver_name }}', '{{ s.driver_phone }}', '{{ s.storage_id or '' }}')"
                                 class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                 Edit transport
                             </button>
                             {% else %}
-                            <button type="button" onclick="openTransportForm('{{ s.shipment_id }}', '', '', '', '')"
+                            <button type="button"
+                                onclick="openTransportForm('{{ s.shipment_id }}', '', '', '', '', '{{ s.storage_id or '' }}')"
                                 class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                 + Add transport
                             </button>
                             {% endif %}
 
-                            {% if storage_users %}
-                            <div class="flex w-full flex-col gap-2 sm:flex-row">
-                                <select id="storage_{{ s.shipment_id }}"
-                                    aria-label="Storage facility for {{ s.shipment_id }}"
-                                    class="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-blue-500">
-                                    {% for st in storage_users %}
-                                    <option value="{{ st.user_id }}">{{ st.name }}</option>
-                                    {% endfor %}
-                                </select>
-                                <button type="button" onclick="assignStorage('{{ s.shipment_id }}')"
-                                    class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-800 transition hover:bg-blue-100">
-                                    Assign storage
-                                </button>
-                            </div>
-                            {% endif %}
                             {% endif %}
                         </div>
 
@@ -360,6 +352,9 @@
         <p class="mt-2 text-sm leading-6 text-slate-500">Position the QR code inside the scanning area to verify
             shipment integrity.</p>
         <div id="reader" class="mx-auto mt-5 w-full max-w-xs overflow-hidden rounded-xl"></div>
+        <p id="scanStatus" role="status" aria-live="polite" class="mt-3 text-sm font-semibold text-slate-700">
+            Ready to scan.
+        </p>
         <p class="mt-4 text-xs leading-5 text-slate-500">Camera access requires browser permission. Use localhost or
             HTTPS.</p>
         <button type="button" onclick="closeScanner()"
@@ -382,6 +377,17 @@
         <p class="mt-2 text-sm leading-6 text-slate-500">Record the transporter, vehicle and driver information.</p>
 
         <div class="mt-6 grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <label for="transport_storage_id" class="mb-1.5 block text-sm font-semibold text-slate-700">Destination
+                    storage facility</label>
+                <select id="transport_storage_id" name="storage_id" required
+                    class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                    <option value="">Select a storage facility</option>
+                    {% for st in storage_users %}
+                    <option value="{{ st.user_id }}">{{ st.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="sm:col-span-2">
                 <label for="transporter_name" class="mb-1.5 block text-sm font-semibold text-slate-700">Transporter
                     name</label>
@@ -492,15 +498,30 @@
                                         return;
                                     }
 
+
                                     const qtyInput = document.getElementById('qty_' + shipmentId);
                                     const confirmButton = document.getElementById('confirm_' + shipmentId);
+
+                                    if (!qtyInput || !confirmButton) {
+                                        throw new Error('Shipment quantity controls could not be found.');
+                                    }
+
                                     qtyInput.disabled = false;
                                     qtyInput.classList.remove('bg-slate-100');
                                     qtyInput.classList.add('bg-white');
                                     confirmButton.disabled = false;
 
-                                    alert('QR verified. Enter the actual received quantity.');
+                                    const verificationStatus =
+                                        document.getElementById('verificationStatus_' + shipmentId);
+
+                                    if (verificationStatus) {
+                                        verificationStatus.textContent =
+                                            'QR verified successfully. You can now enter the quantity.';
+                                        verificationStatus.hidden = false;
+                                    }
+
                                     closeScanner();
+
                                 })
                                 .catch(error => {
                                     console.error('QR verification error:', error);
@@ -577,12 +598,13 @@
             });
     }
 
-    function openTransportForm(id, tname, vehicle, driver, phone) {
+    function openTransportForm(id, tname, vehicle, driver, phone, storageId) {
         document.getElementById('transport_shipment_id').value = id;
         document.getElementById('transporter_name').value = tname || '';
         document.getElementById('vehicle_number').value = vehicle || '';
         document.getElementById('driver_name').value = driver || '';
         document.getElementById('driver_phone').value = phone || '';
+        document.getElementById('transport_storage_id').value = storageId || '';
 
         const modal = document.getElementById('transportModal');
         modal.classList.remove('hidden');
@@ -595,41 +617,6 @@
         modal.classList.remove('flex');
     }
 
-    function assignStorage(shipmentId) {
-        const select = document.getElementById('storage_' + shipmentId);
-        if (!select || !select.value) {
-            alert('Select a storage facility first.');
-            return;
-        }
-
-        const button = Array.from(document.querySelectorAll('button')).find(
-            item => item.getAttribute('onclick') === `assignStorage('${shipmentId}')`
-        );
-        if (button) button.disabled = true;
-
-        fetch('/assign_storage', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify({ shipment_id: shipmentId, storage_id: select.value })
-        })
-            .then(async res => {
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message || 'Storage assignment failed.');
-                return data;
-            })
-            .then(data => {
-                alert(data.message || 'Storage assignment request completed.');
-                location.reload();
-            })
-            .catch(error => {
-                console.error('Storage assignment error:', error);
-                alert(error.message || 'Storage assignment failed.');
-                if (button) button.disabled = false;
-            });
-    }
 
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
